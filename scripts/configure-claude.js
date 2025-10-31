@@ -9,12 +9,16 @@ const path = require('path');
 
 console.log('🔧 Configuring Claude Desktop MCP integration...\n');
 
-// Determine Claude Desktop config path
-const configPath = path.join(
-  process.env.APPDATA || process.env.HOME || '',
-  'Claude',
-  'claude_desktop_config.json'
-);
+// Determine Claude Desktop config path based on OS
+let configPath;
+if (process.platform === 'darwin') {
+  configPath = path.join(process.env.HOME, 'Library/Application Support/Claude/claude_desktop_config.json');
+} else if (process.platform === 'win32') {
+  configPath = path.join(process.env.APPDATA || '', 'Claude', 'claude_desktop_config.json');
+} else {
+  // Linux
+  configPath = path.join(process.env.HOME || '', '.config/Claude/claude_desktop_config.json');
+}
 
 console.log(`📁 Config path: ${configPath}\n`);
 
