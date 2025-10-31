@@ -8,6 +8,7 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
+import { zodToJsonSchema } from 'zod-to-json-schema';
 import { SessionManager } from './session-manager';
 import { MCPServerConfig } from './types';
 import {
@@ -67,22 +68,22 @@ export class ClaudeCodeMCPServer {
           {
             name: executeTaskTool.name,
             description: executeTaskTool.description,
-            inputSchema: executeTaskTool.inputSchema.shape,
+            inputSchema: zodToJsonSchema(executeTaskTool.inputSchema),
           },
           {
             name: executeWithToolsTool.name,
             description: executeWithToolsTool.description,
-            inputSchema: executeWithToolsTool.inputSchema.shape,
+            inputSchema: zodToJsonSchema(executeWithToolsTool.inputSchema),
           },
           {
             name: executeWithPermissionTool.name,
             description: executeWithPermissionTool.description,
-            inputSchema: executeWithPermissionTool.inputSchema.shape,
+            inputSchema: zodToJsonSchema(executeWithPermissionTool.inputSchema),
           },
           {
             name: getSessionInfoTool.name,
             description: getSessionInfoTool.description,
-            inputSchema: getSessionInfoTool.inputSchema.shape,
+            inputSchema: zodToJsonSchema(getSessionInfoTool.inputSchema),
           },
         ],
       };
