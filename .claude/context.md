@@ -209,7 +209,52 @@ node scripts/configure-claude.js
 
 ## Gotchas
 
-### 1. Process Spawning on Windows
+### 1. Zod Schema to JSON Schema Conversion (CRITICAL)
+**Issue**: Tools not showing up in Claude Desktop despite server connecting successfully.
+
+**Root Cause**: Zod's `.shape` property returns internal Zod objects, NOT the JSON Schema format that MCP protocol expects.
+
+**WRONG**:
+```typescript
+this.server.setRequestHandler(ListToolsRequestSchema, async () => {
+  return {
+    tools: [{
+      name: 'tool_name',
+      description: 'Description',
+      inputSchema: myZodSchema.shape  // ❌ WRONG! Returns Zod internals
+    }]
+  };
+});
+```
+
+**CORRECT**:
+```typescript
+import { zodToJsonSchema } from 'zod-to-json-schema';
+
+this.server.setRequestHandler(ListToolsRequestSchema, async () => {
+  return {
+    tools: [{
+      name: 'tool_name',
+      description: 'Description',
+      inputSchema: zodToJsonSchema(myZodSchema)  // ✅ Correct!
+    }]
+  };
+});
+```
+
+**Symptoms**:
+- MCP server connects successfully
+- Claude Desktop shows the connector
+- No tools appear in the tools list
+- No errors in logs
+
+**Fix**: Use `zod-to-json-schema` package to convert Zod schemas to JSON Schema
+
+**Related**: Similar to SharePoint MCP Railway's `.parameters` vs `.inputSchema` issue with FastMCP, but TypeScript equivalent.
+
+**Fixed in**: Commit `a71de21`
+
+### 2. Process Spawning on Windows
 **Issue**: Windows handles process spawning differently than Unix.
 
 **Solution**: Always use `shell: false` and avoid shell-specific syntax:
