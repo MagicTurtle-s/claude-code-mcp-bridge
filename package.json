@@ -1,6 +1,6 @@
 {
   "name": "@magicturtle-s/claude-code-mcp",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "MCP server that bridges Claude Desktop to Claude Code CLI, enabling delegation to subagents",
   "main": "build/index.js",
   "bin": {
