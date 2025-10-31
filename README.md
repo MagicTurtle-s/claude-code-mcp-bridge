@@ -14,46 +14,66 @@ This MCP (Model Context Protocol) server creates a bridge between Claude Desktop
 - **Session Management**: Track and monitor active Claude Code sessions
 - **One-Command Setup**: Get up and running in under 60 seconds
 
-## Quick Start
+## Quick Start (60 Seconds)
 
-### Installation
+### One-Command Installation
+
+The installer will automatically:
+- ✅ Check/install Claude Desktop
+- ✅ Check/install Claude Code CLI
+- ✅ Install the MCP bridge
+- ✅ Configure Claude Desktop
+
+**Mac/Linux:**
+```bash
+curl -fsSL https://raw.githubusercontent.com/MagicTurtle-s/claude-code-mcp-bridge/main/install.sh | bash
+```
+
+**Windows (PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/MagicTurtle-s/claude-code-mcp-bridge/main/install.ps1 | iex
+```
+
+**That's it!** Just restart Claude Desktop and start using it.
+
+---
+
+### Alternative: Manual Installation
+
+If you prefer manual control or are installing on air-gapped systems:
+
+#### Prerequisites
+- **Node.js 18+** - [Download](https://nodejs.org/)
+- **Claude Desktop** - [Download](https://claude.com/download)
+- **Claude Code CLI** - Install with: `npm install -g @anthropic-ai/claude-code`
+
+#### Steps
 
 ```bash
-# Install via NPM (coming soon)
-npm install -g @magicturtle-s/claude-code-mcp
-
-# Or clone and setup locally
+# Clone the repository
 git clone https://github.com/MagicTurtle-s/claude-code-mcp-bridge.git
 cd claude-code-mcp-bridge
+
+# Install and setup (automatically builds and configures)
 npm install
-npm run build
-claude-code-mcp setup
+
+# Verify setup
+npx claude-code-mcp validate
 ```
 
-### Prerequisites
-
-- **Node.js 18+**
-- **Claude Code CLI** installed and in PATH
-- **Claude Desktop** installed
-
-### Setup
-
-```bash
-# Run the setup wizard
-claude-code-mcp setup
-
-# Or manually configure
-claude-code-mcp configure
-```
+**Note:** `npm install` automatically runs the setup wizard via the `postinstall` script. If already configured, it will skip setup.
 
 ### Verification
 
 ```bash
 # Validate your setup
-claude-code-mcp validate
+npx claude-code-mcp validate
 
 # Run diagnostics
-claude-code-mcp doctor
+npx claude-code-mcp doctor
+
+# Reconfigure if needed
+npx claude-code-mcp configure
 ```
 
 ## Usage
@@ -229,18 +249,34 @@ npm test  # Coming soon
 
 ## Troubleshooting
 
+### Installation Issues
+
+**One-liner install fails:**
+1. Ensure you have permission to install global npm packages
+2. Try manual installation instead
+3. Check your internet connection
+4. For Windows, ensure PowerShell execution policy allows scripts
+
+**Claude Desktop not detected:**
+- The installer will prompt you to download it manually
+- Visit [claude.com/download](https://claude.com/download)
+- Re-run the installer after installing Claude Desktop
+
 ### MCP server not showing in Claude Desktop
 
-1. Run `claude-code-mcp doctor` to diagnose
-2. Verify Claude Desktop config: `claude-code-mcp validate`
+1. Run `npx claude-code-mcp doctor` to diagnose
+2. Verify Claude Desktop config: `npx claude-code-mcp validate`
 3. Check Claude Desktop logs for errors
 4. Restart Claude Desktop
+5. Try reconfiguring: `npx claude-code-mcp configure`
 
 ### Claude Code CLI not found
 
 1. Verify Claude Code is installed: `claude --version`
-2. Add Claude Code to your PATH
-3. Set `CLAUDE_CODE_PATH` environment variable in config
+2. Install manually: `npm install -g @anthropic-ai/claude-code`
+3. Authenticate: `claude --print 'test'`
+4. Add Claude Code to your PATH
+5. Set `CLAUDE_CODE_PATH` environment variable in config
 
 ### Timeout errors
 

@@ -81,7 +81,16 @@ program
     }
 
     // Check Claude Desktop config
-    const configPath = path.join(process.env.APPDATA || '', 'Claude', 'claude_desktop_config.json');
+    let configPath;
+    if (process.platform === 'darwin') {
+      configPath = path.join(process.env.HOME, 'Library/Application Support/Claude/claude_desktop_config.json');
+    } else if (process.platform === 'win32') {
+      configPath = path.join(process.env.APPDATA || '', 'Claude', 'claude_desktop_config.json');
+    } else {
+      // Linux
+      configPath = path.join(process.env.HOME || '', '.config/Claude/claude_desktop_config.json');
+    }
+
     if (fs.existsSync(configPath)) {
       console.log('✓ Claude Desktop config found');
 
