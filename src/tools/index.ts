@@ -17,6 +17,7 @@ export const executeTaskTool = {
     prompt: z.string().describe('The task for Claude Code to execute'),
     timeout: z.number().optional().describe('Timeout in milliseconds (default: 120000)'),
     stream_progress: z.boolean().optional().describe('Stream progress updates in real-time (default: true)'),
+    verbose: z.boolean().optional().describe('Include detailed diagnostic information in the response (default: false)'),
   }),
 };
 
@@ -25,24 +26,32 @@ export async function executeTask(
   params: z.infer<typeof executeTaskTool.inputSchema>
 ): Promise<ToolExecutionResult> {
   try {
-    const { sessionId, result } = await sessionManager.createSession({
+    const { sessionId, result, executor } = await sessionManager.createSession({
       prompt: params.prompt,
       timeout: params.timeout || 120000,
       streamProgress: params.stream_progress !== false,
     });
 
+    const response: any = {
+      success: true,
+      sessionId,
+      result: result.result,
+      cost: result.total_cost_usd,
+      duration: result.duration_ms,
+      usage: result.usage,
+    };
+
+    // Add verbose diagnostics if requested
+    if (params.verbose && executor) {
+      response.diagnostics = executor.getDiagnostics();
+      response.allChunks = executor.getAllChunks();
+    }
+
     return {
       content: [
         {
           type: 'text',
-          text: JSON.stringify({
-            success: true,
-            sessionId,
-            result: result.result,
-            cost: result.total_cost_usd,
-            duration: result.duration_ms,
-            usage: result.usage,
-          }, null, 2),
+          text: JSON.stringify(response, null, 2),
         },
       ],
     };
@@ -128,10 +137,10 @@ export async function executeWithTools(
  */
 export const executeWithPermissionTool = {
   name: 'execute_with_permission_mode',
-  description: 'Execute a Claude Code task with a specific permission mode. Use "plan" for safe analysis without execution, "acceptEdits" to auto-accept file changes, or "default" for normal behavior.',
+  description: 'Execute a Claude Code task with a specific permission mode. Use "plan" for safe analysis without execution, "acceptEdits" to auto-accept file changes, "bypassPermissions" to allow MCP tool usage, or "default" for normal behavior.',
   inputSchema: z.object({
     prompt: z.string().describe('The task for Claude Code to execute'),
-    permission_mode: z.enum(['plan', 'acceptEdits', 'default']).describe('Permission mode: "plan" = analyze only, "acceptEdits" = auto-accept changes, "default" = normal'),
+    permission_mode: z.enum(['plan', 'acceptEdits', 'default', 'bypassPermissions']).describe('Permission mode: "plan" = analyze only, "acceptEdits" = auto-accept changes, "bypassPermissions" = allow MCP tools, "default" = normal'),
     timeout: z.number().optional().describe('Timeout in milliseconds (default: 120000)'),
   }),
 };

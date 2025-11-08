@@ -33,3 +33,16 @@ coverage/
 # Temporary files
 tmp/
 temp/
+test-*.js
+
+# Private/local files (not for public repo)
+.local-private/
+*.original
+.sanitize-patterns.txt
+
+# Personal organizational files (Pattern 5: contain infrastructure details)
+PROJECT-INDEX.md
+ORGANIZATION.md
+WORKSPACE*.md
+*-INDEX.md
+*.local.md
