@@ -21,6 +21,46 @@ if (isAutomated) {
   process.exit(0);
 }
 
+// Determine Claude Desktop config path based on OS
+let configPath;
+if (process.platform === 'darwin') {
+  configPath = path.join(process.env.HOME, 'Library/Application Support/Claude/claude_desktop_config.json');
+} else if (process.platform === 'win32') {
+  configPath = path.join(process.env.APPDATA || '', 'Claude', 'claude_desktop_config.json');
+} else {
+  // Linux
+  configPath = path.join(process.env.HOME || '', '.config/Claude/claude_desktop_config.json');
+}
+
+// Check if already configured (skip in interactive mode)
+if (fs.existsSync(configPath)) {
+  try {
+    const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+    if (config.mcpServers && config.mcpServers['claude-code-bridge']) {
+      console.log('✅ Claude Desktop already configured with MCP bridge!\n');
+      console.log('Configuration found at:', configPath);
+      console.log('\n📝 To reconfigure, run: claude-code-mcp configure');
+      console.log('📝 To validate setup, run: claude-code-mcp validate\n');
+
+      // Still ensure build exists
+      const buildPath = path.join(__dirname, '..', 'build');
+      if (!fs.existsSync(buildPath)) {
+        console.log('🔨 Building project...');
+        execSync('npm run build', {
+          cwd: path.join(__dirname, '..'),
+          stdio: 'inherit',
+        });
+        console.log('  ✅ Build complete\n');
+      }
+
+      process.exit(0);
+    }
+  } catch (error) {
+    // Continue with setup if can't parse config
+    console.log('⚠️  Could not parse existing config, continuing with setup...\n');
+  }
+}
+
 // Step 1: Check Node.js version
 console.log('Step 1: Checking Node.js version...');
 const nodeVersion = process.version.match(/v(\d+)/)[1];
