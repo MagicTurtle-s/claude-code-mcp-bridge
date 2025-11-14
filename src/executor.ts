@@ -35,6 +35,7 @@ export class ClaudeCodeExecutor extends EventEmitter {
       this.process = spawn(this.claudeCodePath, args, {
         stdio: ['pipe', 'pipe', 'pipe'],
         shell: false,
+        cwd: options.workingDirectory || process.cwd(),
       });
 
       const chunks: ClaudeCodeStreamMessage[] = [];
@@ -128,6 +129,11 @@ export class ClaudeCodeExecutor extends EventEmitter {
     // Permission mode
     if (options.permissionMode) {
       args.push('--permission-mode', options.permissionMode);
+    }
+
+    // MCP configuration file
+    if (options.mcpConfigPath) {
+      args.push('--mcp-config', options.mcpConfigPath);
     }
 
     // Allowed tools

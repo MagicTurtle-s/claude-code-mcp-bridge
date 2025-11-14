@@ -39,6 +39,12 @@ export interface ClaudeCodeExecutionOptions {
 
   /** Model to use (sonnet, opus, haiku) */
   model?: 'sonnet' | 'opus' | 'haiku';
+
+  /** Working directory for the spawned process (cwd) */
+  workingDirectory?: string;
+
+  /** Path to MCP configuration file to use (--mcp-config flag) */
+  mcpConfigPath?: string;
 }
 
 /**

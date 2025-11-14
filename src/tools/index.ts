@@ -26,7 +26,7 @@ export async function executeTask(
   params: z.infer<typeof executeTaskTool.inputSchema>
 ): Promise<ToolExecutionResult> {
   try {
-    const { sessionId, result, executor } = await sessionManager.createSession({
+    const { sessionId, result } = await sessionManager.createSession({
       prompt: params.prompt,
       timeout: params.timeout || 120000,
       streamProgress: params.stream_progress !== false,
@@ -41,11 +41,7 @@ export async function executeTask(
       usage: result.usage,
     };
 
-    // Add verbose diagnostics if requested
-    if (params.verbose && executor) {
-      response.diagnostics = executor.getDiagnostics();
-      response.allChunks = executor.getAllChunks();
-    }
+    // Note: verbose diagnostics feature removed in favor of simpler implementation
 
     return {
       content: [

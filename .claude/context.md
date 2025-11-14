@@ -2,7 +2,125 @@
 
 This file contains Claude-specific context, patterns, and gotchas for working on this project.
 
-## Architecture Overview
+## Orchestrator Pattern (NEW)
+
+### Overview
+This bridge implements an **orchestrator pattern** where Claude Code acts as a conductor with 0 MCP token overhead, delegating tasks to specialized Code subprocesses that load specific MCP contexts on-demand.
+
+### Problem Solved
+- **Before**: Global MCPs loaded in every session = 151.8k token overhead (75.9% of 200k context)
+- **After**: Global sessions start at 0 tokens, delegate only when needed
+
+### Orchestrator Data Flow
+```
+Claude Code (Global, 0 MCPs)
+  ↓ (analyzes task, determines needed context)
+Bridge MCP Server (delegation tools)
+  ↓ (generates temp MCP config)
+Session Manager (executeDelegatedTask)
+  ↓ (spawns subprocess)
+Claude Code Subprocess
+  ├─ --mcp-config /tmp/mcp-config-xyz.json
+  ├─ cwd: ~/hubspot-mcp-railway (or sharepoint/asana)
+  └─ Loads HubSpot MCP (116 tools)
+  ↓ (executes task with MCP access)
+Returns result to orchestrator
+  ↓ (cleanup temp config)
+Displays to user
+```
+
+### Key Implementation Files
+
+**src/config.ts** - Environment-based configuration
+```typescript
+export const MCP_CONTEXTS = {
+  hubspot: {
+    projectPath: process.env.HUBSPOT_PROJECT_PATH || '~/hubspot-mcp-railway',
+    mcpUrl: process.env.HUBSPOT_MCP_URL || 'https://...',
+    type: 'http'
+  },
+  // sharepoint, asana...
+};
+```
+
+**src/utils/mcp-config-generator.ts** - Dynamic config generation
+```typescript
+export function generateMCPConfig(context: 'hubspot' | 'sharepoint' | 'asana') {
+  return {
+    mcpServers: {
+      [context]: {
+        type: MCP_CONTEXTS[context].type,
+        url: MCP_CONTEXTS[context].mcpUrl
+      }
+    }
+  };
+}
+```
+
+**src/session-manager.ts** - Parallel execution
+```typescript
+async executeDelegatedTask(options, mcpConfig, workingDirectory) {
+  const tempConfigPath = writeToTempFile(mcpConfig);
+  try {
+    return await createSession({
+      ...options,
+      mcpConfigPath: tempConfigPath,
+      workingDirectory
+    });
+  } finally {
+    cleanupTempFile(tempConfigPath);
+  }
+}
+
+async executeBatch(tasks) {
+  return Promise.all(tasks.map(task => executeDelegatedTask(...)));
+}
+```
+
+**src/tools/delegation.ts** - 4 delegation tools
+- `delegate_hubspot_task`: HubSpot CRM operations
+- `delegate_sharepoint_task`: SharePoint document management
+- `delegate_asana_task`: Asana project management
+- `delegate_batch_tasks`: Parallel execution across contexts
+
+### Usage Pattern
+```typescript
+// In Claude Code global session (0 MCP tokens loaded)
+User: "Create a new company in HubSpot called Acme Corp"
+
+Code: // Determines HubSpot context needed
+      // Calls delegate_hubspot_task tool via Bridge MCP
+
+Bridge: // generateMCPConfig('hubspot')
+        // executeDelegatedTask(
+        //   { prompt: "Create company Acme Corp" },
+        //   hubspotMcpConfig,
+        //   '~/hubspot-mcp-railway'
+        // )
+
+Subprocess: // claude --mcp-config /tmp/config.json --print "..."
+            // Loads HubSpot MCP (116 tools)
+            // Executes: mcp__hubspot__crm_create_company
+
+Result: Company created, returns to global Code session
+```
+
+### Parallel Execution Example
+```typescript
+// Execute 3 tasks simultaneously
+delegate_batch_tasks({
+  tasks: [
+    { context: 'hubspot', prompt: 'List all companies' },
+    { context: 'sharepoint', prompt: 'List documents in Sales folder' },
+    { context: 'asana', prompt: 'Get Q1 goals' }
+  ]
+});
+
+// All 3 run in parallel via Promise.all()
+// Total time ~= single delegation time (not 3x)
+```
+
+## Architecture Overview (Original)
 
 ### Data Flow
 ```
