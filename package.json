@@ -1,8 +1,9 @@
 {
-  "name": "@magicturtle-s/claude-code-mcp",
-  "version": "1.0.1",
-  "description": "MCP server that bridges Claude Desktop to Claude Code CLI, enabling delegation to subagents",
+  "name": "@magicturtle/claude-orchestrator",
+  "version": "1.0.0",
+  "description": "Claude Code orchestrator with MCP delegation - enables zero-overhead delegation to specialized Code instances with HubSpot, SharePoint, and Asana MCPs",
   "main": "build/index.js",
+  "types": "build/index.d.ts",
   "bin": {
     "claude-code-mcp": "./bin/cli.js"
   },
@@ -19,17 +20,26 @@
     "mcp",
     "claude",
     "claude-code",
+    "claude-desktop",
     "mcp-server",
     "ai",
     "anthropic",
     "delegation",
-    "subagents"
+    "orchestrator",
+    "hubspot",
+    "sharepoint",
+    "asana",
+    "parallel-execution"
   ],
   "author": "MagicTurtle-s",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/MagicTurtle-s/claude-code-mcp-bridge.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "public"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4",

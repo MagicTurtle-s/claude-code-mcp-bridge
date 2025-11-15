@@ -1,18 +1,48 @@
-# Claude Code MCP Bridge
+# Claude Orchestrator
 
-**Enable Claude Desktop to delegate tasks to Claude Code CLI and its powerful subagents.**
+**Zero-overhead orchestration pattern for Claude Code with on-demand MCP delegation.**
 
-This MCP (Model Context Protocol) server creates a bridge between Claude Desktop and Claude Code CLI, allowing Claude Desktop to execute complex coding tasks by delegating to Claude Code's specialized subagents (Explore, Plan, etc.).
+This package enables Claude Code to act as an orchestrator, delegating tasks to specialized Code instances with specific MCP contexts (HubSpot, SharePoint, Asana) only when needed. Eliminates global MCP token overhead (151.8k tokens → 0 tokens) while enabling parallel execution.
 
 ## Features
 
-- **Seamless Integration**: Claude Desktop can delegate tasks to Claude Code with a single command
-- **Full Subagent Access**: Leverage Claude Code's Explore, Plan, and other specialized agents
-- **Streaming Responses**: Real-time progress updates as Claude Code works
-- **Tool Control**: Fine-grained control over which tools Claude Code can use
-- **Permission Modes**: Choose between plan-only, auto-accept edits, or default behavior
-- **Session Management**: Track and monitor active Claude Code sessions
-- **One-Command Setup**: Get up and running in under 60 seconds
+### Orchestrator Pattern
+- **Zero Token Overhead**: Global Code sessions start with 0 MCP tokens loaded
+- **On-Demand Delegation**: Load MCPs only when tasks require them
+- **Parallel Execution**: Run multiple delegations simultaneously via `Promise.all()`
+- **Working Directory Context**: Each delegation runs in the appropriate project directory
+
+### MCP Bridge Capabilities
+- **Desktop → Code Delegation**: Claude Desktop can spawn Code CLI sessions
+- **Streaming Responses**: Real-time progress updates during execution
+- **Tool Control**: Fine-grained control over which tools are allowed
+- **Permission Modes**: Choose plan-only, auto-accept edits, or default behavior
+- **Session Management**: Track and monitor active sessions
+
+### Supported MCP Contexts
+- **HubSpot**: 116 CRM tools (companies, contacts, deals, leads)
+- **SharePoint**: Document management and folder operations
+- **Asana**: Project management (tasks, projects, goals, portfolios)
+
+## Installation
+
+### Via NPM (Recommended)
+
+```bash
+npm install @magicturtle/claude-orchestrator
+```
+
+### Configure GitHub Packages Authentication
+
+Since this is published to GitHub Packages, you need to authenticate:
+
+1. Create a Personal Access Token (PAT) with `read:packages` scope at https://github.com/settings/tokens
+
+2. Add to your `~/.npmrc`:
+```
+@magicturtle:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=YOUR_GITHUB_PAT
+```
 
 ## Quick Start (60 Seconds)
 

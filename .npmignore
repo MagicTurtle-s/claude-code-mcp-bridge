@@ -1,0 +1,57 @@
+# Source files (only include compiled build/)
+src/
+*.ts
+!*.d.ts
+tsconfig.json
+
+# Development files
+.git/
+.github/
+.vscode/
+node_modules/
+
+# Scripts and configs
+scripts/
+.env
+.env.*
+!.env.example
+
+# Documentation (keep README.md, exclude others)
+docs/
+CONTRIBUTING.md
+CHANGELOG.md
+PROGRESS.md
+*.bak
+
+# Test files
+test/
+tests/
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+
+# Build artifacts to exclude
+coverage/
+.nyc_output/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+*.sw
+
+p
+*.swn
+*.swo
+
+# Misc
+*.md
+!README.md
+!LICENSE

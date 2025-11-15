@@ -1,0 +1,85 @@
+name: Publish to GitHub Packages
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+  publish:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@magicturtle'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Publish to GitHub Packages
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Notify client repositories
+        run: |
+          echo "Published version ${{ steps.get_version.outputs.VERSION }}"
+          # Trigger repository dispatch events to client repos
+          # This will be configured once client repos are created
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ steps.get_version.outputs.VERSION }}
+          body: |
+            ## Changes in ${{ steps.get_version.outputs.VERSION }}
+
+            Published to GitHub Packages as `@magicturtle/claude-orchestrator@${{ steps.get_version.outputs.VERSION }}`
+
+            ### Installation
+            ```bash
+            npm install @magicturtle/claude-orchestrator@${{ steps.get_version.outputs.VERSION }}
+            ```
+
+            See [CHANGELOG.md](CHANGELOG.md) for full details.
+          draft: false
+          prerelease: false
