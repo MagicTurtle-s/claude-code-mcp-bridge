@@ -1,109 +1,59 @@
-# Claude Orchestrator
+# Claude Code MCP Bridge
 
-**Zero-overhead orchestration pattern for Claude Code with on-demand MCP delegation.**
+**Enable Claude Desktop to delegate tasks to Claude Code CLI and its powerful subagents.**
 
-This package enables Claude Code to act as an orchestrator, delegating tasks to specialized Code instances with specific MCP contexts (HubSpot, SharePoint, Asana) only when needed. Eliminates global MCP token overhead (151.8k tokens → 0 tokens) while enabling parallel execution.
+This MCP (Model Context Protocol) server creates a bridge between Claude Desktop and Claude Code CLI, allowing Claude Desktop to execute complex coding tasks by delegating to Claude Code's specialized subagents (Explore, Plan, etc.).
 
 ## Features
 
-### Orchestrator Pattern
-- **Zero Token Overhead**: Global Code sessions start with 0 MCP tokens loaded
-- **On-Demand Delegation**: Load MCPs only when tasks require them
-- **Parallel Execution**: Run multiple delegations simultaneously via `Promise.all()`
-- **Working Directory Context**: Each delegation runs in the appropriate project directory
+- **Seamless Integration**: Claude Desktop can delegate tasks to Claude Code with a single command
+- **Full Subagent Access**: Leverage Claude Code's Explore, Plan, and other specialized agents
+- **Streaming Responses**: Real-time progress updates as Claude Code works
+- **Tool Control**: Fine-grained control over which tools Claude Code can use
+- **Permission Modes**: Choose between plan-only, auto-accept edits, or default behavior
+- **Session Management**: Track and monitor active Claude Code sessions
+- **One-Command Setup**: Get up and running in under 60 seconds
 
-### MCP Bridge Capabilities
-- **Desktop → Code Delegation**: Claude Desktop can spawn Code CLI sessions
-- **Streaming Responses**: Real-time progress updates during execution
-- **Tool Control**: Fine-grained control over which tools are allowed
-- **Permission Modes**: Choose plan-only, auto-accept edits, or default behavior
-- **Session Management**: Track and monitor active sessions
+## Quick Start
 
-### Supported MCP Contexts
-- **HubSpot**: 116 CRM tools (companies, contacts, deals, leads)
-- **SharePoint**: Document management and folder operations
-- **Asana**: Project management (tasks, projects, goals, portfolios)
-
-## Installation
-
-### Via NPM (Recommended)
+### Installation
 
 ```bash
-npm install @magicturtle/claude-orchestrator
-```
+# Install via NPM (coming soon)
+npm install -g @magicturtle-s/claude-code-mcp
 
-### Configure GitHub Packages Authentication
-
-Since this is published to GitHub Packages, you need to authenticate:
-
-1. Create a Personal Access Token (PAT) with `read:packages` scope at https://github.com/settings/tokens
-
-2. Add to your `~/.npmrc`:
-```
-@magicturtle:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken=YOUR_GITHUB_PAT
-```
-
-## Quick Start (60 Seconds)
-
-### One-Command Installation
-
-The installer will automatically:
-- ✅ Check/install Claude Desktop
-- ✅ Check/install Claude Code CLI
-- ✅ Install the MCP bridge
-- ✅ Configure Claude Desktop
-
-**Mac/Linux:**
-```bash
-curl -fsSL https://raw.githubusercontent.com/MagicTurtle-s/claude-code-mcp-bridge/main/install.sh | bash
-```
-
-**Windows (PowerShell):**
-```powershell
-irm https://raw.githubusercontent.com/MagicTurtle-s/claude-code-mcp-bridge/main/install.ps1 | iex
-```
-
-**That's it!** Just restart Claude Desktop and start using it.
-
----
-
-### Alternative: Manual Installation
-
-If you prefer manual control or are installing on air-gapped systems:
-
-#### Prerequisites
-- **Node.js 18+** - [Download](https://nodejs.org/)
-- **Claude Desktop** - [Download](https://claude.com/download)
-- **Claude Code CLI** - Install with: `npm install -g @anthropic-ai/claude-code`
-
-#### Steps
-
-```bash
-# Clone the repository
+# Or clone and setup locally
 git clone https://github.com/MagicTurtle-s/claude-code-mcp-bridge.git
 cd claude-code-mcp-bridge
-
-# Install and setup (automatically builds and configures)
 npm install
-
-# Verify setup
-npx claude-code-mcp validate
+npm run build
+claude-code-mcp setup
 ```
 
-**Note:** `npm install` automatically runs the setup wizard via the `postinstall` script. If already configured, it will skip setup.
+### Prerequisites
+
+- **Node.js 18+**
+- **Claude Code CLI** installed and in PATH
+- **Claude Desktop** installed
+
+### Setup
+
+```bash
+# Run the setup wizard
+claude-code-mcp setup
+
+# Or manually configure
+claude-code-mcp configure
+```
 
 ### Verification
 
 ```bash
 # Validate your setup
-npx claude-code-mcp validate
+claude-code-mcp validate
 
 # Run diagnostics
-npx claude-code-mcp doctor
-
-# Reconfigure if needed
-npx claude-code-mcp configure
+claude-code-mcp doctor
 ```
 
 ## Usage
@@ -126,6 +76,7 @@ Execute any Claude Code task with full subagent capabilities.
 - `prompt` (required): The task for Claude Code to execute
 - `timeout` (optional): Timeout in milliseconds (default: 120000)
 - `stream_progress` (optional): Stream progress updates (default: true)
+- `verbose` (optional): Include detailed diagnostic information (default: false)
 
 #### 2. `execute_with_tools` - Controlled Tool Access
 Execute with fine-grained control over which tools Claude Code can use.
@@ -279,45 +230,55 @@ npm test  # Coming soon
 
 ## Troubleshooting
 
-### Installation Issues
+**For comprehensive troubleshooting, see [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)**
 
-**One-liner install fails:**
-1. Ensure you have permission to install global npm packages
-2. Try manual installation instead
-3. Check your internet connection
-4. For Windows, ensure PowerShell execution policy allows scripts
+### Quick Fixes
 
-**Claude Desktop not detected:**
-- The installer will prompt you to download it manually
-- Visit [claude.com/download](https://claude.com/download)
-- Re-run the installer after installing Claude Desktop
+#### MCP server not showing in Claude Desktop
 
-### MCP server not showing in Claude Desktop
-
-1. Run `npx claude-code-mcp doctor` to diagnose
-2. Verify Claude Desktop config: `npx claude-code-mcp validate`
+1. Run `claude-code-mcp doctor` to diagnose
+2. Verify Claude Desktop config: `claude-code-mcp validate`
 3. Check Claude Desktop logs for errors
 4. Restart Claude Desktop
-5. Try reconfiguring: `npx claude-code-mcp configure`
 
-### Claude Code CLI not found
+#### No output captured from tasks
+
+1. **Enable verbose mode**:
+   ```json
+   {
+     "prompt": "Your task",
+     "verbose": true
+   }
+   ```
+   This returns diagnostic information about what was captured.
+
+2. **Enable debug logging** in Claude Desktop config:
+   ```json
+   {
+     "env": {
+       "DEBUG": "true"
+     }
+   }
+   ```
+
+3. **Test Claude Code CLI directly**:
+   ```bash
+   claude --print --output-format stream-json "What is 2+2?"
+   ```
+
+#### Claude Code CLI not found
 
 1. Verify Claude Code is installed: `claude --version`
-2. Install manually: `npm install -g @anthropic-ai/claude-code`
-3. Authenticate: `claude --print 'test'`
-4. Add Claude Code to your PATH
-5. Set `CLAUDE_CODE_PATH` environment variable in config
+2. Add Claude Code to your PATH
+3. Set `CLAUDE_CODE_PATH` environment variable in config
 
-### Timeout errors
+#### Timeout errors
 
-1. Increase timeout in tool parameters
-2. Check if Claude Code is responding: `claude --print "test"`
-3. Review debug logs: `claude-code-mcp start --debug`
+1. Increase timeout in tool parameters: `"timeout": 300000`
+2. Use plan mode for analysis: `"permission_mode": "plan"`
+3. Break down large tasks into smaller ones
 
-### Permission denied errors
-
-1. On Linux/Mac, make scripts executable: `chmod +x bin/cli.js scripts/*.js`
-2. Verify file permissions in build directory
+**For more detailed troubleshooting, see [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)**
 
 ## Use Cases
 

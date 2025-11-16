@@ -28,7 +28,7 @@ export class SessionManager extends EventEmitter {
    */
   async createSession(
     options: ClaudeCodeExecutionOptions
-  ): Promise<{ sessionId: string; result: ClaudeCodeResult }> {
+  ): Promise<{ sessionId: string; result: ClaudeCodeResult; executor?: ClaudeCodeExecutor }> {
     const sessionId = this.generateSessionId();
 
     // Create session info
@@ -45,8 +45,8 @@ export class SessionManager extends EventEmitter {
     this.sessions.set(sessionId, session);
     this.emit('session:created', sessionId);
 
-    // Create executor
-    const executor = new ClaudeCodeExecutor(this.config.claudeCodePath);
+    // Create executor with debug flag
+    const executor = new ClaudeCodeExecutor(this.config.claudeCodePath, this.config.debug);
     this.executors.set(sessionId, executor);
 
     // Forward executor events
@@ -86,7 +86,7 @@ export class SessionManager extends EventEmitter {
       // Schedule cleanup
       this.scheduleSessionCleanup(sessionId);
 
-      return { sessionId, result };
+      return { sessionId, result, executor };
     } catch (error) {
       // Update session status
       session.status = 'failed';
