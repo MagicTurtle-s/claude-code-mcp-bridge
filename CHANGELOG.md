@@ -5,6 +5,61 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2025-11-16
+
+### BREAKING CHANGES
+- **Removed MCP-specific delegation tools** to restore pure ferry architecture
+  - Removed: `delegate_hubspot_task`, `delegate_asana_task`, `delegate_sharepoint_task`, `delegate_batch_tasks`
+  - Removed: MCP context configuration system (`src/config.ts`)
+  - Removed: MCP config generator utility (`src/utils/mcp-config-generator.ts`)
+  - Removed: `executeDelegatedTask()` and `executeBatch()` methods from SessionManager
+
+### Architecture
+- Reverted to **pure "ferry" architecture** where bridge has no knowledge of specific MCPs
+- Bridge now expects caller to provide MCP configuration via `mcpConfigPath` parameter
+- Maintains only 4 generic tools that work with any MCP configuration:
+  - `execute_task`
+  - `execute_with_tools`
+  - `execute_with_permission_mode`
+  - `get_session_info`
+
+### Rationale
+- Eliminates coupling between bridge and MCP implementations
+- Prevents token overhead from growing with each new MCP added
+- Aligns with original design vision of MCP-agnostic message conduit
+- Simplifies codebase and reduces maintenance burden
+- Scales to unlimited MCPs without code changes
+
+### Migration Guide
+If you were using delegation tools in v1.x:
+
+**Before (v1.x):**
+```typescript
+delegate_asana_task({
+  prompt: "Search for tasks assigned to Butch"
+})
+```
+
+**After (v2.0):**
+```typescript
+// Caller creates and manages MCP config
+const configPath = "/tmp/my-asana-config.json";
+writeFileSync(configPath, JSON.stringify({
+  mcpServers: {
+    asana: {
+      type: "sse",
+      url: "https://asana-mcp-railway-production.up.railway.app"
+    }
+  }
+}));
+
+// Use generic execute_task with mcpConfigPath
+execute_task({
+  prompt: "Search for tasks assigned to Butch",
+  mcpConfigPath: configPath
+})
+```
+
 ## [1.0.1] - 2025-10-30
 
 ### Fixed

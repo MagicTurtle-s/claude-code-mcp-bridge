@@ -21,16 +21,6 @@ import {
   getSessionInfoTool,
   getSessionInfo,
 } from './tools';
-import {
-  delegateHubSpotTaskTool,
-  delegateHubSpotTask,
-  delegateSharePointTaskTool,
-  delegateSharePointTask,
-  delegateAsanaTaskTool,
-  delegateAsanaTask,
-  delegateBatchTasksTool,
-  delegateBatchTasks,
-} from './tools/delegation';
 
 export class ClaudeCodeMCPServer {
   private server: Server;
@@ -54,7 +44,7 @@ export class ClaudeCodeMCPServer {
     this.server = new Server(
       {
         name: 'claude-code-mcp-bridge',
-        version: '1.0.0',
+        version: '2.0.0',
       },
       {
         capabilities: {
@@ -75,7 +65,6 @@ export class ClaudeCodeMCPServer {
     this.server.setRequestHandler(ListToolsRequestSchema, async () => {
       return {
         tools: [
-          // Original execution tools
           {
             name: executeTaskTool.name,
             description: executeTaskTool.description,
@@ -95,27 +84,6 @@ export class ClaudeCodeMCPServer {
             name: getSessionInfoTool.name,
             description: getSessionInfoTool.description,
             inputSchema: zodToJsonSchema(getSessionInfoTool.inputSchema),
-          },
-          // Delegation tools
-          {
-            name: delegateHubSpotTaskTool.name,
-            description: delegateHubSpotTaskTool.description,
-            inputSchema: zodToJsonSchema(delegateHubSpotTaskTool.inputSchema),
-          },
-          {
-            name: delegateSharePointTaskTool.name,
-            description: delegateSharePointTaskTool.description,
-            inputSchema: zodToJsonSchema(delegateSharePointTaskTool.inputSchema),
-          },
-          {
-            name: delegateAsanaTaskTool.name,
-            description: delegateAsanaTaskTool.description,
-            inputSchema: zodToJsonSchema(delegateAsanaTaskTool.inputSchema),
-          },
-          {
-            name: delegateBatchTasksTool.name,
-            description: delegateBatchTasksTool.description,
-            inputSchema: zodToJsonSchema(delegateBatchTasksTool.inputSchema),
           },
         ],
       };
@@ -149,27 +117,6 @@ export class ClaudeCodeMCPServer {
           case 'get_session_info': {
             const params = getSessionInfoTool.inputSchema.parse(args);
             return await getSessionInfo(this.sessionManager, params);
-          }
-
-          // Delegation tools
-          case 'delegate_hubspot_task': {
-            const params = delegateHubSpotTaskTool.inputSchema.parse(args);
-            return await delegateHubSpotTask(this.sessionManager, params);
-          }
-
-          case 'delegate_sharepoint_task': {
-            const params = delegateSharePointTaskTool.inputSchema.parse(args);
-            return await delegateSharePointTask(this.sessionManager, params);
-          }
-
-          case 'delegate_asana_task': {
-            const params = delegateAsanaTaskTool.inputSchema.parse(args);
-            return await delegateAsanaTask(this.sessionManager, params);
-          }
-
-          case 'delegate_batch_tasks': {
-            const params = delegateBatchTasksTool.inputSchema.parse(args);
-            return await delegateBatchTasks(this.sessionManager, params);
           }
 
           default:

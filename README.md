@@ -1,34 +1,40 @@
 # Claude Code MCP Bridge
 
-**Enable Claude Desktop to delegate tasks to Claude Code CLI and its powerful subagents.**
+**A pure message ferry between Claude Desktop and Claude Code CLI - MCP-agnostic and zero-overhead.**
 
-This MCP (Model Context Protocol) server creates a bridge between Claude Desktop and Claude Code CLI, allowing Claude Desktop to execute complex coding tasks by delegating to Claude Code's specialized subagents (Explore, Plan, etc.).
+This MCP (Model Context Protocol) server creates a transparent bridge that allows Claude Desktop to delegate tasks to Claude Code CLI with any MCP configuration, without the bridge needing to know about specific MCPs.
+
+## Architecture: Pure Ferry Pattern
+
+The bridge is a **simple message conduit** with zero knowledge of MCPs:
+
+```
+Claude Desktop/Code (Caller)
+    ↓ Provides MCP config path
+Bridge (Pure Ferry)
+    ↓ Passes config transparently
+Claude Code Subprocess
+    ↓ Loads ANY MCP from config
+Results flow back
+```
+
+**Key Principle:** The bridge never knows which MCPs exist. It simply:
+1. Accepts execution requests with optional MCP config paths
+2. Spawns Claude Code with that config
+3. Returns results
+4. Stays MCP-agnostic forever
 
 ## Features
 
-- **Seamless Integration**: Claude Desktop can delegate tasks to Claude Code with a single command
-- **Full Subagent Access**: Leverage Claude Code's Explore, Plan, and other specialized agents
-- **Streaming Responses**: Real-time progress updates as Claude Code works
-- **Tool Control**: Fine-grained control over which tools Claude Code can use
-- **Permission Modes**: Choose between plan-only, auto-accept edits, or default behavior
-- **Session Management**: Track and monitor active Claude Code sessions
-- **One-Command Setup**: Get up and running in under 60 seconds
+- **Zero MCP Knowledge**: Bridge has no hardcoded MCP contexts
+- **Unlimited Scalability**: Works with any MCP - present or future
+- **Minimal Token Overhead**: Only 4 tools, regardless of MCP count
+- **Simple Architecture**: Pure message passing, no orchestration logic
+- **Full Claude Code Access**: All subagents, tools, and capabilities
+- **Streaming Responses**: Real-time progress updates
+- **Session Management**: Track and monitor active sessions
 
 ## Quick Start
-
-### Installation
-
-```bash
-# Install via NPM (coming soon)
-npm install -g @magicturtle-s/claude-code-mcp
-
-# Or clone and setup locally
-git clone https://github.com/MagicTurtle-s/claude-code-mcp-bridge.git
-cd claude-code-mcp-bridge
-npm install
-npm run build
-claude-code-mcp setup
-```
 
 ### Prerequisites
 
@@ -36,130 +42,26 @@ claude-code-mcp setup
 - **Claude Code CLI** installed and in PATH
 - **Claude Desktop** installed
 
-### Setup
+### Installation
 
 ```bash
-# Run the setup wizard
-claude-code-mcp setup
-
-# Or manually configure
-claude-code-mcp configure
+# Clone and setup
+git clone https://github.com/MagicTurtle-s/claude-code-mcp-bridge.git
+cd claude-code-mcp-bridge
+npm install
+npm run build
 ```
 
-### Verification
+### Configure Claude Desktop
 
-```bash
-# Validate your setup
-claude-code-mcp validate
-
-# Run diagnostics
-claude-code-mcp doctor
-```
-
-## Usage
-
-Once configured, the MCP server starts automatically with Claude Desktop. No manual server management needed!
-
-### Available Tools in Claude Desktop
-
-The MCP bridge exposes 4 powerful tools to Claude Desktop:
-
-#### 1. `execute_task` - Basic Task Execution
-Execute any Claude Code task with full subagent capabilities.
-
-**Example prompts for Claude Desktop:**
-- "Use Claude Code to search my codebase for authentication patterns"
-- "Have Claude Code analyze the performance of my React components"
-- "Ask Claude Code to explain how the database schema works"
-
-**Parameters:**
-- `prompt` (required): The task for Claude Code to execute
-- `timeout` (optional): Timeout in milliseconds (default: 120000)
-- `stream_progress` (optional): Stream progress updates (default: true)
-- `verbose` (optional): Include detailed diagnostic information (default: false)
-
-#### 2. `execute_with_tools` - Controlled Tool Access
-Execute with fine-grained control over which tools Claude Code can use.
-
-**Example prompts:**
-- "Use Claude Code to search files, but don't allow any file modifications"
-- "Have Claude Code analyze code using only Read and Grep tools"
-
-**Parameters:**
-- `prompt` (required): The task to execute
-- `allowed_tools` (optional): List of allowed tool patterns (e.g., `["Bash(git:*)", "Read", "Grep"]`)
-- `disallowed_tools` (optional): List of disallowed tool patterns (e.g., `["Write", "Edit"]`)
-- `timeout` (optional): Timeout in milliseconds
-
-#### 3. `execute_with_permission_mode` - Safety Controls
-Execute with specific permission mode for safety.
-
-**Example prompts:**
-- "Use Claude Code in plan mode to analyze what changes are needed"
-- "Have Claude Code fix the bug with auto-accept for edits"
-
-**Parameters:**
-- `prompt` (required): The task to execute
-- `permission_mode` (required): One of:
-  - `plan`: Analyze only, no execution
-  - `acceptEdits`: Auto-accept all file changes
-  - `default`: Normal interactive behavior
-- `timeout` (optional): Timeout in milliseconds
-
-#### 4. `get_session_info` - Session Monitoring
-Get information about active or completed Claude Code sessions.
-
-**Example prompts:**
-- "Show me all active Claude Code sessions"
-- "Get details about session sess_12345"
-
-**Parameters:**
-- `session_id` (optional): Specific session ID to query
-
-## Architecture
-
-```
-┌────────────────────────────────────────┐
-│     Claude Desktop (MCP Client)        │
-│  - User asks questions                 │
-│  - Receives tool suggestions           │
-│  - Displays results                    │
-└────────────────┬───────────────────────┘
-                 │ STDIO (MCP Protocol)
-                 ▼
-┌────────────────────────────────────────┐
-│  Claude Code MCP Bridge (This Server)  │
-│  - Receives tool calls from Desktop    │
-│  - Spawns Claude Code CLI processes    │
-│  - Streams output back to Desktop      │
-│  - Manages session lifecycle           │
-└────────────────┬───────────────────────┘
-                 │ Process Spawning
-                 ▼
-┌────────────────────────────────────────┐
-│    Claude Code CLI (with Subagents)    │
-│  - Executes tasks using subagents      │
-│  - Explore: Search and understand code │
-│  - Plan: Plan implementation steps     │
-│  - Returns structured JSON results     │
-└────────────────────────────────────────┘
-```
-
-## Configuration
-
-### Manual Configuration
-
-The setup wizard automatically configures Claude Desktop, but you can also do it manually:
-
-1. Open Claude Desktop config: `%APPDATA%\Claude\claude_desktop_config.json` (Windows)
-2. Add the MCP server:
+Add to your `claude_desktop_config.json`:
 
 ```json
 {
   "mcpServers": {
     "claude-code-bridge": {
       "command": "node",
-      "args": ["C:\\Users\\YourUser\\claude-code-mcp-bridge\\build\\index.js"],
+      "args": ["/path/to/claude-code-mcp-bridge/build/index.js"],
       "env": {
         "DEBUG": "false",
         "CLAUDE_CODE_PATH": "claude"
@@ -169,176 +71,291 @@ The setup wizard automatically configures Claude Desktop, but you can also do it
 }
 ```
 
-3. Restart Claude Desktop
+### Verify Setup
 
-### Environment Variables
+Restart Claude Desktop. The bridge should start automatically and expose 4 tools.
 
-- `CLAUDE_CODE_PATH`: Path to Claude Code CLI executable (default: `claude`)
-- `DEBUG`: Enable debug logging (default: `false`)
+## Available Tools
 
-## CLI Commands
+The bridge provides 4 generic, MCP-agnostic tools:
 
-```bash
-# Setup and configuration
-claude-code-mcp setup          # Run setup wizard
-claude-code-mcp configure      # Configure Claude Desktop integration
-claude-code-mcp validate       # Validate setup
-claude-code-mcp doctor         # Run diagnostics
+### 1. `execute_task`
+Execute any task with Claude Code, optionally with MCP context.
 
-# Server management
-claude-code-mcp start          # Start MCP server manually
-claude-code-mcp start --debug  # Start with debug logging
+**Parameters:**
+- `prompt` (required): The task to execute
+- `mcpConfigPath` (optional): Path to MCP configuration file (caller provides)
+- `timeout` (optional): Timeout in milliseconds (default: 120000)
+- `permissionMode` (optional): `plan` | `acceptEdits` | `default` | `bypassPermissions`
+- `streamProgress` (optional): Enable streaming updates (default: true)
+
+**Example:**
+```typescript
+execute_task({
+  prompt: "Search codebase for authentication patterns",
+  mcpConfigPath: "/tmp/my-mcp-config.json" // Optional
+})
 ```
+
+### 2. `execute_with_tools`
+Execute with specific tool filtering.
+
+**Parameters:**
+- `prompt` (required): The task to execute
+- `allowedTools` (optional): Array of allowed tool patterns
+- `disallowedTools` (optional): Array of disallowed tool patterns
+- `mcpConfigPath` (optional): Path to MCP config
+- `timeout` (optional): Timeout in milliseconds
+
+**Example:**
+```typescript
+execute_with_tools({
+  prompt: "Analyze code structure",
+  allowedTools: ["Read", "Grep", "Glob"],
+  disallowedTools: ["Write", "Edit"]
+})
+```
+
+### 3. `execute_with_permission_mode`
+Execute with specific permission mode.
+
+**Parameters:**
+- `prompt` (required): The task to execute
+- `permissionMode` (required): `plan` | `acceptEdits` | `default` | `bypassPermissions`
+- `mcpConfigPath` (optional): Path to MCP config
+- `timeout` (optional): Timeout in milliseconds
+
+**Example:**
+```typescript
+execute_with_permission_mode({
+  prompt: "Analyze what changes are needed",
+  permissionMode: "plan"
+})
+```
+
+### 4. `get_session_info`
+Get information about a Claude Code session.
+
+**Parameters:**
+- `sessionId` (required): The session ID to query
+
+## Using with MCPs
+
+The bridge doesn't know about MCPs - **the caller manages MCP configurations**.
+
+### Example: Using with Asana MCP
+
+**Step 1: Create MCP config file**
+```javascript
+// Caller creates this file
+const fs = require('fs');
+const configPath = '/tmp/my-asana-config.json';
+
+fs.writeFileSync(configPath, JSON.stringify({
+  mcpServers: {
+    asana: {
+      type: "sse",
+      url: "https://asana-mcp-railway-production.up.railway.app"
+    }
+  }
+}));
+```
+
+**Step 2: Call bridge with config path**
+```typescript
+execute_task({
+  prompt: "Search Asana for tasks assigned to Butch",
+  mcpConfigPath: configPath
+})
+```
+
+**Step 3: Bridge spawns Code with that config**
+```bash
+# Bridge runs this internally:
+claude --mcp-config /tmp/my-asana-config.json --print "Search Asana for tasks..."
+```
+
+**Result:** Code loads Asana MCP and executes the task. Bridge never knew what "Asana" was.
+
+### Benefits of This Approach
+
+✅ **Add new MCPs without code changes** - Just create different config files
+✅ **Zero token overhead growth** - Bridge always has 4 tools
+✅ **Full flexibility** - Mix and match any MCPs in your configs
+✅ **True separation of concerns** - Bridge ferries messages, caller manages MCPs
+
+## Migration from v1.x
+
+v2.0.0 removed MCP-specific delegation tools to restore the pure ferry architecture.
+
+### What Changed
+
+**Removed:**
+- `delegate_hubspot_task`
+- `delegate_asana_task`
+- `delegate_sharepoint_task`
+- `delegate_batch_tasks`
+
+**Reason:** These tools created coupling between bridge and MCPs, defeating the token-saving purpose.
+
+### How to Migrate
+
+**Before (v1.x):**
+```typescript
+delegate_asana_task({
+  prompt: "Search for tasks"
+})
+```
+
+**After (v2.0):**
+```typescript
+// You manage the MCP config
+const configPath = "/tmp/asana-config.json";
+fs.writeFileSync(configPath, JSON.stringify({
+  mcpServers: { asana: { type: "sse", url: "..." } }
+}));
+
+// Use generic tool
+execute_task({
+  prompt: "Search for tasks",
+  mcpConfigPath: configPath
+})
+```
+
+## Architecture Details
+
+### Why "Ferry" Instead of "Orchestrator"?
+
+**Ferry Pattern (v2.0):**
+- Bridge has no MCP knowledge
+- Caller provides configs
+- Scales infinitely
+- Simple codebase
+
+**Orchestrator Pattern (v1.x - removed):**
+- Bridge had hardcoded MCP contexts
+- Generated configs internally
+- Required code changes for new MCPs
+- Violated single responsibility
+
+### Data Flow
+
+```
+1. Caller creates MCP config file (if needed)
+2. Caller calls execute_task with mcpConfigPath
+3. Bridge receives request
+4. Bridge spawns: claude --mcp-config <path> --print "<prompt>"
+5. Code subprocess loads MCPs from config
+6. Code executes task with MCP tools
+7. Results stream back through bridge
+8. Bridge returns results to caller
+9. Bridge never inspected the config
+```
+
+### Code Structure
+
+**Minimal, focused codebase:**
+```
+src/
+├── index.ts              # Entry point
+├── server.ts             # MCP server (4 tools)
+├── executor.ts           # Code subprocess spawner
+├── session-manager.ts    # Session lifecycle
+├── types.ts              # Type definitions
+└── tools/
+    └── index.ts          # 4 generic tools
+```
+
+**No MCP-specific code anywhere!**
 
 ## Development
 
-### Project Structure
-
-```
-claude-code-mcp-bridge/
-├── src/
-│   ├── index.ts              # Server entry point
-│   ├── server.ts             # MCP server implementation
-│   ├── executor.ts           # Claude Code CLI executor
-│   ├── session-manager.ts    # Session lifecycle management
-│   ├── types.ts              # TypeScript interfaces
-│   └── tools/                # MCP tool implementations
-│       └── index.ts
-├── scripts/
-│   ├── setup.js              # Setup wizard
-│   ├── configure-claude.js   # Claude Desktop config automation
-│   └── validate.js           # Setup validation
-├── bin/
-│   └── cli.js                # CLI tool
-└── build/                    # Compiled JavaScript (generated)
-```
-
-### Building from Source
-
+### Build
 ```bash
-git clone https://github.com/MagicTurtle-s/claude-code-mcp-bridge.git
-cd claude-code-mcp-bridge
-npm install
 npm run build
 ```
 
-### Running Tests
-
+### Development Mode
 ```bash
-npm test  # Coming soon
+npm run dev  # Watch mode
+```
+
+### Testing
+```bash
+# Test basic execution
+node test-executor.js
+
+# Test with MCP config
+# (Create a test config first, then run)
 ```
 
 ## Troubleshooting
 
-**For comprehensive troubleshooting, see [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)**
+### Bridge Not Starting
+- Check Claude Desktop logs: `%APPDATA%\Claude\logs\`
+- Verify Node.js version: `node --version` (needs 18+)
+- Check Claude Code path: `claude --version`
 
-### Quick Fixes
+### No Output from Tasks
+- Ensure `--verbose` flag is used in executor (built-in since v1.0.1)
+- Check executor closes stdin (built-in since v1.0.1)
+- Enable debug mode: Set `DEBUG: "true"` in config
 
-#### MCP server not showing in Claude Desktop
-
-1. Run `claude-code-mcp doctor` to diagnose
-2. Verify Claude Desktop config: `claude-code-mcp validate`
-3. Check Claude Desktop logs for errors
-4. Restart Claude Desktop
-
-#### No output captured from tasks
-
-1. **Enable verbose mode**:
-   ```json
-   {
-     "prompt": "Your task",
-     "verbose": true
-   }
-   ```
-   This returns diagnostic information about what was captured.
-
-2. **Enable debug logging** in Claude Desktop config:
-   ```json
-   {
-     "env": {
-       "DEBUG": "true"
-     }
-   }
-   ```
-
-3. **Test Claude Code CLI directly**:
-   ```bash
-   claude --print --output-format stream-json "What is 2+2?"
-   ```
-
-#### Claude Code CLI not found
-
-1. Verify Claude Code is installed: `claude --version`
-2. Add Claude Code to your PATH
-3. Set `CLAUDE_CODE_PATH` environment variable in config
-
-#### Timeout errors
-
-1. Increase timeout in tool parameters: `"timeout": 300000`
-2. Use plan mode for analysis: `"permission_mode": "plan"`
-3. Break down large tasks into smaller ones
-
-**For more detailed troubleshooting, see [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)**
+### MCP Config Not Loading
+- Verify config file exists at the path you provided
+- Check JSON syntax in config file
+- Ensure MCP URLs are accessible
+- Remember: Bridge doesn't validate configs - Code does
 
 ## Use Cases
 
-### Code Analysis
-"Use Claude Code to search my entire codebase for SQL injection vulnerabilities"
+### 1. Desktop Delegates to Code
+Claude Desktop uses the bridge to leverage Code's powerful subagents.
 
-### Architecture Understanding
-"Have Claude Code explore and explain the microservices architecture"
+### 2. Code Delegates to Code with MCPs
+Global Code instance (with bridge) delegates to subprocess with specific MCP context.
 
-### Refactoring
-"Use Claude Code to identify all duplicate code patterns and suggest refactorings"
+### 3. Automated Workflows
+Scripts call bridge tools programmatically with various MCP configs.
 
-### Testing
-"Ask Claude Code to analyze test coverage and suggest missing test cases"
+## Technical Details
 
-### Documentation
-"Have Claude Code generate documentation for all API endpoints"
+### Session Management
+- Sessions auto-cleanup after 30 minutes idle
+- Graceful shutdown on SIGINT/SIGTERM
+- Event-driven lifecycle hooks
+
+### Streaming
+- Real-time progress updates via streaming JSON
+- Parses Claude Code's `--output-format stream-json`
+- Non-blocking, async I/O
+
+### Error Handling
+- Timeout protection (configurable)
+- Process cleanup on errors
+- Detailed error messages with context
 
 ## Contributing
 
-Contributions are welcome! Please:
+Contributions welcome! The architecture is intentionally simple:
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+**Core Principle:** The bridge must NEVER know about specific MCPs.
+
+If a PR adds MCP-specific code, it will be rejected. The caller should manage MCP configurations.
 
 ## License
 
-MIT License - see LICENSE file for details
+MIT
 
-## Support
+## Links
 
-- **Issues**: https://github.com/MagicTurtle-s/claude-code-mcp-bridge/issues
-- **Documentation**: https://github.com/MagicTurtle-s/claude-code-mcp-bridge
+- **GitHub**: https://github.com/MagicTurtle-s/claude-code-mcp-bridge
+- **NPM**: @magicturtle/claude-orchestrator (GitHub Packages)
 - **Claude Code Docs**: https://docs.claude.com/claude-code
+- **MCP Specification**: https://github.com/anthropics/mcp
 
-## Roadmap
+## Version
 
-- [x] Basic MCP server implementation
-- [x] STDIO transport
-- [x] Streaming support
-- [x] Session management
-- [x] Tool filtering
-- [x] Permission modes
-- [x] One-command setup
-- [ ] NPM package publication
-- [ ] HTTP/SSE transport (for Railway deployment)
-- [ ] Web dashboard
-- [ ] Session resume/fork capabilities
-- [ ] Advanced progress tracking
-- [ ] Cost tracking and analytics
+Current: **2.0.0** (Pure Ferry Architecture)
 
-## Credits
-
-Built by **MagicTurtle-s** with ❤️ for the Claude community.
-
-Powered by:
-- **Claude Code CLI** by Anthropic
-- **Model Context Protocol (MCP)** by Anthropic
-- **TypeScript** for type safety
-- **Node.js** for runtime
+See [CHANGELOG.md](./CHANGELOG.md) for version history.
