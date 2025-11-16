@@ -1,6 +1,6 @@
 {
   "name": "@magicturtle/claude-orchestrator",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Claude Code orchestrator with MCP delegation - enables zero-overhead delegation to specialized Code instances with HubSpot, SharePoint, and Asana MCPs",
   "main": "build/index.js",
   "types": "build/index.d.ts",
