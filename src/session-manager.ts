@@ -46,24 +46,32 @@ export class SessionManager extends EventEmitter {
    * Always creates a config with at least the bridge, even if no user config provided
    */
   private async createMergedConfig(mcpConfigPath?: string): Promise<string> {
-    let userConfig = {};
+    let userServers = {};
 
     // Read user-provided config if available
     if (mcpConfigPath) {
       const userConfigContent = await fs.readFile(mcpConfigPath, 'utf-8');
-      userConfig = JSON.parse(userConfigContent);
+      const userConfigObj = JSON.parse(userConfigContent);
+
+      // Extract mcpServers if it exists, otherwise assume the whole object is servers
+      userServers = userConfigObj.mcpServers || userConfigObj;
     }
 
-    // Always merge with bridge config (bridge first, so user config takes precedence)
-    const mergedConfig = {
+    // Merge bridge with user servers (bridge first, so user config takes precedence)
+    const mergedServers = {
       ...this.getBridgeConfig(),
-      ...userConfig
+      ...userServers
+    };
+
+    // Wrap in mcpServers object as required by Claude Code CLI schema
+    const wrappedConfig = {
+      mcpServers: mergedServers
     };
 
     // Write merged config to temp file
     const tempDir = os.tmpdir();
     const tempConfigPath = path.join(tempDir, `mcp-config-with-bridge-${Date.now()}.json`);
-    await fs.writeFile(tempConfigPath, JSON.stringify(mergedConfig, null, 2));
+    await fs.writeFile(tempConfigPath, JSON.stringify(wrappedConfig, null, 2));
 
     // Normalize path to forward slashes for cross-platform compatibility
     // Claude Code CLI has issues with backslashes on Windows
