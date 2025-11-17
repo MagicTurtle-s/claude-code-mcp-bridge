@@ -21,6 +21,14 @@ import {
   getSessionInfoTool,
   getSessionInfo,
 } from './tools';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
+// Read version from package.json
+const packageJson = JSON.parse(
+  readFileSync(join(__dirname, '../package.json'), 'utf-8')
+);
+const VERSION = packageJson.version;
 
 export class ClaudeCodeMCPServer {
   private server: Server;
@@ -44,7 +52,7 @@ export class ClaudeCodeMCPServer {
     this.server = new Server(
       {
         name: 'claude-code-mcp-bridge',
-        version: '2.0.0',
+        version: VERSION,
       },
       {
         capabilities: {

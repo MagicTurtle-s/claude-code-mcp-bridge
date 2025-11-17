@@ -65,7 +65,9 @@ export class SessionManager extends EventEmitter {
     const tempConfigPath = path.join(tempDir, `mcp-config-with-bridge-${Date.now()}.json`);
     await fs.writeFile(tempConfigPath, JSON.stringify(mergedConfig, null, 2));
 
-    return tempConfigPath;
+    // Normalize path to forward slashes for cross-platform compatibility
+    // Claude Code CLI has issues with backslashes on Windows
+    return tempConfigPath.replace(/\\/g, '/');
   }
 
   /**
