@@ -128,11 +128,20 @@ Available MCP configs in project directories:
 - Asana: C:\\Users\\jonat\\asana-mcp-railway\\.mcp-config.json (tasks, projects, goals)
 - SharePoint: C:\\Users\\jonat\\sharepoint-mcp-railway\\.mcp-config.json (documents, files)
 
-When the user's query requires data from these systems:
-1. Analyze which MCP(s) are needed based on keywords (deals→HubSpot, tasks→Asana, documents→SharePoint)
-2. Use bridge.execute_task() to spawn subprocesses with the appropriate MCP configs
-3. For parallel queries, spawn multiple subprocesses simultaneously
-4. Aggregate and correlate results before responding
+IMPORTANT: These .mcp-config.json files contain a "mcpServers" wrapper. When calling bridge.execute_task():
+1. Read the config file
+2. Parse JSON and extract ONLY the "mcpServers" object
+3. Write just that object to a temp file
+4. Pass the temp file path to bridge.execute_task({ mcpConfigPath: tempPath, ... })
+
+Example workflow for "deals from Company X":
+1. Read C:\\Users\\jonat\\hubspot-mcp-railway\\.mcp-config.json
+2. Extract: config.mcpServers (just the { "hubspot": { "type": "http", ... } } part)
+3. Write to /tmp/hubspot-temp-\${Date.now()}.json
+4. Call bridge.execute_task({ prompt: "Find deals for Company X", mcpConfigPath: tempPath })
+5. Clean up temp file when done
+
+For parallel queries, spawn multiple bridge.execute_task() calls simultaneously.
 
 User query: ${options.prompt}`;
 
