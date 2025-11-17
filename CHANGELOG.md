@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2025-11-17
+
+### Added
+- **Recursive bridge access**: Bridge now injects itself into subprocess MCP configs
+  - Enables orchestrator pattern: Code subprocess can spawn further Code subprocesses
+  - Maintains MCP-agnostic architecture while enabling multi-level delegation
+  - New `getBridgeConfig()` method returns bridge's own MCP configuration
+  - New `createMergedConfig()` method merges user config with bridge config
+
+### Changed
+- `SessionManager.createSession()` now creates merged config combining:
+  - User-provided MCP configuration (from `mcpConfigPath`)
+  - Bridge's own configuration (for recursive calls)
+- Merged config is automatically cleaned up after session completes
+- Subprocess now has access to bridge tools for further delegation
+
+### Benefits
+- **Zero-overhead orchestration**: Global Code session has no MCPs, orchestrator spawns subprocesses as needed
+- **Parallel delegation**: Orchestrator can spawn multiple MCP subprocesses simultaneously
+- **AI-based intent analysis**: Orchestrator determines which MCPs needed for each query
+- **Recursive support**: Any depth of subprocess delegation now possible
+
+### Migration
+No breaking changes - existing code continues to work. Subprocesses now automatically get bridge access.
+
 ## [2.0.0] - 2025-11-16
 
 ### BREAKING CHANGES

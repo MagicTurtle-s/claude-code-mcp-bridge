@@ -24,12 +24,56 @@ export class SessionManager extends EventEmitter {
   }
 
   /**
+   * Get bridge's own MCP config for recursive access
+   * This allows spawned Code subprocesses to use the bridge themselves
+   */
+  private getBridgeConfig(): any {
+    return {
+      'claude-code-bridge': {
+        command: 'node',
+        args: [path.join(__dirname, '../build/index.js')],
+        env: {
+          DEBUG: this.config.debug ? 'true' : 'false',
+          CLAUDE_CODE_PATH: this.config.claudeCodePath || 'claude'
+        }
+      }
+    };
+  }
+
+  /**
+   * Merge user-provided MCP config with bridge config for recursive access
+   */
+  private async createMergedConfig(mcpConfigPath?: string): Promise<string | undefined> {
+    if (!mcpConfigPath) {
+      return undefined;
+    }
+
+    // Read user-provided config
+    const userConfigContent = await fs.readFile(mcpConfigPath, 'utf-8');
+    const userConfig = JSON.parse(userConfigContent);
+
+    // Merge with bridge config (bridge first, so user config takes precedence)
+    const mergedConfig = {
+      ...this.getBridgeConfig(),
+      ...userConfig
+    };
+
+    // Write merged config to temp file
+    const tempDir = os.tmpdir();
+    const tempConfigPath = path.join(tempDir, `mcp-config-with-bridge-${Date.now()}.json`);
+    await fs.writeFile(tempConfigPath, JSON.stringify(mergedConfig, null, 2));
+
+    return tempConfigPath;
+  }
+
+  /**
    * Create and execute a new session
    */
   async createSession(
     options: ClaudeCodeExecutionOptions
   ): Promise<{ sessionId: string; result: ClaudeCodeResult; executor?: ClaudeCodeExecutor }> {
     const sessionId = this.generateSessionId();
+    let mergedConfigPath: string | undefined;
 
     // Create session info
     const session: SessionInfo = {
@@ -44,6 +88,9 @@ export class SessionManager extends EventEmitter {
 
     this.sessions.set(sessionId, session);
     this.emit('session:created', sessionId);
+
+    // Create merged config (user config + bridge) for recursive access
+    mergedConfigPath = await this.createMergedConfig(options.mcpConfigPath);
 
     // Create executor with debug flag
     const executor = new ClaudeCodeExecutor(this.config.claudeCodePath, this.config.debug);
@@ -71,9 +118,10 @@ export class SessionManager extends EventEmitter {
     });
 
     try {
-      // Execute the task
+      // Execute the task with merged config (if available)
       const result = await executor.execute({
         ...options,
+        mcpConfigPath: mergedConfigPath || options.mcpConfigPath,
         timeout: options.timeout || this.config.defaultTimeout,
       });
 
@@ -97,6 +145,15 @@ export class SessionManager extends EventEmitter {
       this.scheduleSessionCleanup(sessionId);
 
       throw error;
+    } finally {
+      // Clean up merged config file
+      if (mergedConfigPath) {
+        try {
+          await fs.unlink(mergedConfigPath);
+        } catch (err) {
+          // Ignore cleanup errors
+        }
+      }
     }
   }
 
