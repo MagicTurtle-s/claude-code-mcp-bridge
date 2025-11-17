@@ -139,32 +139,39 @@ Available MCP configs in project directories:
 - Asana: C:\\Users\\jonat\\asana-mcp-railway\\.mcp-config.json (tasks, projects, goals)
 - SharePoint: C:\\Users\\jonat\\sharepoint-mcp-railway\\.mcp-config.json (documents, files)
 
-CRITICAL: ALWAYS use execute_with_permission_mode() with bypassPermissions when spawning subprocesses.
-Subprocesses cannot prompt for permissions, so they will timeout if you use execute_task().
+CRITICAL REQUIREMENTS for spawning subprocesses:
+1. MUST use execute_with_permission_mode() - never execute_task()
+2. MUST include permission_mode: "bypassPermissions" parameter
+3. MUST include mcpConfigPath parameter pointing to the temp config file
+4. Subprocesses will timeout without all three requirements above
 
-IMPORTANT: These .mcp-config.json files contain a "mcpServers" wrapper. When calling bridge tools:
-1. Read the config file using the Read tool (you have permission)
-2. Parse JSON and extract ONLY the "mcpServers" object
-3. Write just that object to a temp file using the Write tool
-4. Call bridge.execute_with_permission_mode({
-     prompt: "Your task here",
-     mcpConfigPath: tempPath,
-     permission_mode: "bypassPermissions"
-   })
-5. Clean up temp file when done
-
-Example workflow for "deals from Company X":
+Workflow for HubSpot queries (deals, contacts, companies):
 1. Read C:\\Users\\jonat\\hubspot-mcp-railway\\.mcp-config.json
-2. Extract: config.mcpServers (just the { "hubspot": { "type": "http", ... } } part)
-3. Write to /tmp/hubspot-temp-\${Date.now()}.json using Write tool
-4. Call bridge.execute_with_permission_mode({
-     prompt: "Find deals for Company X",
-     mcpConfigPath: "/tmp/hubspot-temp-\${Date.now()}.json",
-     permission_mode: "bypassPermissions"
-   })
-5. Clean up temp file when done
+2. Parse JSON, extract config.mcpServers (unwrap the outer wrapper)
+3. Write ONLY the mcpServers object to temp file (e.g. /tmp/hubspot-1234.json)
+4. Call mcp__claude-code-bridge__execute_with_permission_mode with ALL THREE parameters:
+   {
+     "prompt": "Find deals for Company X in HubSpot",
+     "mcpConfigPath": "/tmp/hubspot-1234.json",
+     "permission_mode": "bypassPermissions"
+   }
+5. Clean up temp file
 
-For parallel queries, spawn multiple execute_with_permission_mode() calls simultaneously.`;
+Workflow for Asana queries (tasks, projects, goals):
+1. Read C:\\Users\\jonat\\asana-mcp-railway\\.mcp-config.json
+2. Parse JSON, extract config.mcpServers
+3. Write to temp file (e.g. /tmp/asana-5678.json)
+4. Call mcp__claude-code-bridge__execute_with_permission_mode with ALL THREE parameters:
+   {
+     "prompt": "Find pending tasks in Asana",
+     "mcpConfigPath": "/tmp/asana-5678.json",
+     "permission_mode": "bypassPermissions"
+   }
+5. Clean up temp file
+
+For parallel queries (e.g. HubSpot + Asana), spawn both calls simultaneously with their respective configs.
+
+COMMON MISTAKE TO AVOID: DO NOT forget the mcpConfigPath parameter! Without it, the subprocess won't have access to HubSpot/Asana MCPs and will fail.`;
 
       // Debug logging
       if (this.config.debug) {
