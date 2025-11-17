@@ -42,17 +42,18 @@ export class SessionManager extends EventEmitter {
 
   /**
    * Merge user-provided MCP config with bridge config for recursive access
+   * Always creates a config with at least the bridge, even if no user config provided
    */
-  private async createMergedConfig(mcpConfigPath?: string): Promise<string | undefined> {
-    if (!mcpConfigPath) {
-      return undefined;
+  private async createMergedConfig(mcpConfigPath?: string): Promise<string> {
+    let userConfig = {};
+
+    // Read user-provided config if available
+    if (mcpConfigPath) {
+      const userConfigContent = await fs.readFile(mcpConfigPath, 'utf-8');
+      userConfig = JSON.parse(userConfigContent);
     }
 
-    // Read user-provided config
-    const userConfigContent = await fs.readFile(mcpConfigPath, 'utf-8');
-    const userConfig = JSON.parse(userConfigContent);
-
-    // Merge with bridge config (bridge first, so user config takes precedence)
+    // Always merge with bridge config (bridge first, so user config takes precedence)
     const mergedConfig = {
       ...this.getBridgeConfig(),
       ...userConfig
@@ -89,7 +90,8 @@ export class SessionManager extends EventEmitter {
     this.sessions.set(sessionId, session);
     this.emit('session:created', sessionId);
 
-    // Create merged config (user config + bridge) for recursive access
+    // Always create merged config (user config + bridge) for recursive access
+    // Even if no user config, Code gets bridge + orchestrator instructions
     mergedConfigPath = await this.createMergedConfig(options.mcpConfigPath);
 
     // Create executor with debug flag
@@ -118,10 +120,8 @@ export class SessionManager extends EventEmitter {
     });
 
     try {
-      // Enhance prompt with orchestrator instructions if merged config was created
-      let enhancedPrompt = options.prompt;
-      if (mergedConfigPath) {
-        enhancedPrompt = `You have access to the claude-code-bridge MCP which allows you to spawn Code subprocesses with specific MCP configurations.
+      // Always enhance prompt with orchestrator instructions
+      const enhancedPrompt = `You have access to the claude-code-bridge MCP which allows you to spawn Code subprocesses with specific MCP configurations.
 
 Available MCP configs in project directories:
 - HubSpot: C:\\Users\\jonat\\hubspot-mcp-railway\\.mcp-config.json (deals, contacts, companies)
@@ -135,13 +135,12 @@ When the user's query requires data from these systems:
 4. Aggregate and correlate results before responding
 
 User query: ${options.prompt}`;
-      }
 
-      // Execute the task with merged config (if available)
+      // Execute the task with merged config (always has at least the bridge)
       const result = await executor.execute({
         ...options,
         prompt: enhancedPrompt,
-        mcpConfigPath: mergedConfigPath || options.mcpConfigPath,
+        mcpConfigPath: mergedConfigPath,
         timeout: options.timeout || this.config.defaultTimeout,
       });
 
