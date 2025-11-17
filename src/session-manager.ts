@@ -139,20 +139,32 @@ Available MCP configs in project directories:
 - Asana: C:\\Users\\jonat\\asana-mcp-railway\\.mcp-config.json (tasks, projects, goals)
 - SharePoint: C:\\Users\\jonat\\sharepoint-mcp-railway\\.mcp-config.json (documents, files)
 
-IMPORTANT: These .mcp-config.json files contain a "mcpServers" wrapper. When calling bridge.execute_task():
-1. Read the config file
+CRITICAL: ALWAYS use execute_with_permission_mode() with bypassPermissions when spawning subprocesses.
+Subprocesses cannot prompt for permissions, so they will timeout if you use execute_task().
+
+IMPORTANT: These .mcp-config.json files contain a "mcpServers" wrapper. When calling bridge tools:
+1. Read the config file using the Read tool (you have permission)
 2. Parse JSON and extract ONLY the "mcpServers" object
-3. Write just that object to a temp file
-4. Pass the temp file path to bridge.execute_task({ mcpConfigPath: tempPath, ... })
+3. Write just that object to a temp file using the Write tool
+4. Call bridge.execute_with_permission_mode({
+     prompt: "Your task here",
+     mcpConfigPath: tempPath,
+     permission_mode: "bypassPermissions"
+   })
+5. Clean up temp file when done
 
 Example workflow for "deals from Company X":
 1. Read C:\\Users\\jonat\\hubspot-mcp-railway\\.mcp-config.json
 2. Extract: config.mcpServers (just the { "hubspot": { "type": "http", ... } } part)
-3. Write to /tmp/hubspot-temp-\${Date.now()}.json
-4. Call bridge.execute_task({ prompt: "Find deals for Company X", mcpConfigPath: tempPath })
+3. Write to /tmp/hubspot-temp-\${Date.now()}.json using Write tool
+4. Call bridge.execute_with_permission_mode({
+     prompt: "Find deals for Company X",
+     mcpConfigPath: "/tmp/hubspot-temp-\${Date.now()}.json",
+     permission_mode: "bypassPermissions"
+   })
 5. Clean up temp file when done
 
-For parallel queries, spawn multiple bridge.execute_task() calls simultaneously.`;
+For parallel queries, spawn multiple execute_with_permission_mode() calls simultaneously.`;
 
       // Debug logging
       if (this.config.debug) {
