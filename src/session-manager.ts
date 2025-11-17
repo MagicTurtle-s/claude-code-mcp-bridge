@@ -118,9 +118,29 @@ export class SessionManager extends EventEmitter {
     });
 
     try {
+      // Enhance prompt with orchestrator instructions if merged config was created
+      let enhancedPrompt = options.prompt;
+      if (mergedConfigPath) {
+        enhancedPrompt = `You have access to the claude-code-bridge MCP which allows you to spawn Code subprocesses with specific MCP configurations.
+
+Available MCP configs in project directories:
+- HubSpot: C:\\Users\\jonat\\hubspot-mcp-railway\\.mcp-config.json (deals, contacts, companies)
+- Asana: C:\\Users\\jonat\\asana-mcp-railway\\.mcp-config.json (tasks, projects, goals)
+- SharePoint: C:\\Users\\jonat\\sharepoint-mcp-railway\\.mcp-config.json (documents, files)
+
+When the user's query requires data from these systems:
+1. Analyze which MCP(s) are needed based on keywords (deals→HubSpot, tasks→Asana, documents→SharePoint)
+2. Use bridge.execute_task() to spawn subprocesses with the appropriate MCP configs
+3. For parallel queries, spawn multiple subprocesses simultaneously
+4. Aggregate and correlate results before responding
+
+User query: ${options.prompt}`;
+      }
+
       // Execute the task with merged config (if available)
       const result = await executor.execute({
         ...options,
+        prompt: enhancedPrompt,
         mcpConfigPath: mergedConfigPath || options.mcpConfigPath,
         timeout: options.timeout || this.config.defaultTimeout,
       });
