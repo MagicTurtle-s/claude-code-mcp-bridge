@@ -120,8 +120,8 @@ export class SessionManager extends EventEmitter {
     });
 
     try {
-      // Always enhance prompt with orchestrator instructions
-      const enhancedPrompt = `You have access to the claude-code-bridge MCP which allows you to spawn Code subprocesses with specific MCP configurations.
+      // Create orchestrator system prompt
+      const orchestratorSystemPrompt = `You have access to the claude-code-bridge MCP which allows you to spawn Code subprocesses with specific MCP configurations.
 
 Available MCP configs in project directories:
 - HubSpot: C:\\Users\\jonat\\hubspot-mcp-railway\\.mcp-config.json (deals, contacts, companies)
@@ -141,15 +141,13 @@ Example workflow for "deals from Company X":
 4. Call bridge.execute_task({ prompt: "Find deals for Company X", mcpConfigPath: tempPath })
 5. Clean up temp file when done
 
-For parallel queries, spawn multiple bridge.execute_task() calls simultaneously.
+For parallel queries, spawn multiple bridge.execute_task() calls simultaneously.`;
 
-User query: ${options.prompt}`;
-
-      // Execute the task with merged config (always has at least the bridge)
+      // Execute the task with merged config and orchestrator system prompt
       const result = await executor.execute({
         ...options,
-        prompt: enhancedPrompt,
         mcpConfigPath: mergedConfigPath,
+        appendSystemPrompt: orchestratorSystemPrompt,
         timeout: options.timeout || this.config.defaultTimeout,
       });
 
