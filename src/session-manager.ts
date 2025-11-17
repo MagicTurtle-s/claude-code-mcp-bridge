@@ -30,6 +30,7 @@ export class SessionManager extends EventEmitter {
   private getBridgeConfig(): any {
     return {
       'claude-code-bridge': {
+        type: 'stdio',
         command: 'node',
         args: [path.join(__dirname, '../build/index.js')],
         env: {
@@ -142,6 +143,14 @@ Example workflow for "deals from Company X":
 5. Clean up temp file when done
 
 For parallel queries, spawn multiple bridge.execute_task() calls simultaneously.`;
+
+      // Debug logging
+      if (this.config.debug) {
+        console.error('[SessionManager] Executing with:');
+        console.error('[SessionManager]   mcpConfigPath:', mergedConfigPath);
+        console.error('[SessionManager]   appendSystemPrompt length:', orchestratorSystemPrompt.length);
+        console.error('[SessionManager]   original prompt:', options.prompt);
+      }
 
       // Execute the task with merged config and orchestrator system prompt
       const result = await executor.execute({
