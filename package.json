@@ -1,6 +1,6 @@
 {
   "name": "@magicturtle/claude-orchestrator",
-  "version": "2.1.3",
+  "version": "2.1.4",
   "description": "Claude Code MCP Bridge - Pure message ferry for delegating tasks to Claude Code with any MCP configuration",
   "main": "build/index.js",
   "types": "build/index.d.ts",
