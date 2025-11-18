@@ -129,14 +129,15 @@ export async function executeWithTools(
 
 /**
  * Tool: execute_with_permission_mode
- * Execute with specific permission mode (plan, acceptEdits, default)
+ * Execute with specific permission mode (plan, acceptEdits, default, bypassPermissions)
  */
 export const executeWithPermissionTool = {
   name: 'execute_with_permission_mode',
-  description: 'Execute a Claude Code task with a specific permission mode. Use "plan" for safe analysis without execution, "acceptEdits" to auto-accept file changes, "bypassPermissions" to allow MCP tool usage, or "default" for normal behavior.',
+  description: 'Execute a Claude Code task with a specific permission mode. Use "plan" for safe analysis without execution, "acceptEdits" to auto-accept file changes, "bypassPermissions" to allow MCP tool usage, or "default" for normal behavior. Set skip_all_permissions to true to bypass ALL permissions including file reads.',
   inputSchema: z.object({
     prompt: z.string().describe('The task for Claude Code to execute'),
     permission_mode: z.enum(['plan', 'acceptEdits', 'default', 'bypassPermissions']).describe('Permission mode: "plan" = analyze only, "acceptEdits" = auto-accept changes, "bypassPermissions" = allow MCP tools, "default" = normal'),
+    skip_all_permissions: z.boolean().optional().describe('Dangerously skip ALL permissions including file reads (default: false)'),
     timeout: z.number().optional().describe('Timeout in milliseconds (default: 120000)'),
   }),
 };
@@ -149,6 +150,7 @@ export async function executeWithPermission(
     const { sessionId, result } = await sessionManager.createSession({
       prompt: params.prompt,
       permissionMode: params.permission_mode,
+      dangerouslySkipPermissions: params.skip_all_permissions,
       timeout: params.timeout || 120000,
       streamProgress: true,
     });

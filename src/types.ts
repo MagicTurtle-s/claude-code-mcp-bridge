@@ -19,6 +19,9 @@ export interface ClaudeCodeExecutionOptions {
   /** Permission mode to use */
   permissionMode?: PermissionMode;
 
+  /** Dangerously skip ALL permissions (file reads, edits, MCP tools, etc.) */
+  dangerouslySkipPermissions?: boolean;
+
   /** List of allowed tool patterns (e.g., ["Bash(git:*)", "Edit"]) */
   allowedTools?: string[];
 

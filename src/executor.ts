@@ -190,8 +190,11 @@ export class ClaudeCodeExecutor extends EventEmitter {
       '--output-format', 'stream-json', // Streaming JSON output
     ];
 
-    // Permission mode
-    if (options.permissionMode) {
+    // Dangerously skip permissions (takes precedence over permission mode)
+    if (options.dangerouslySkipPermissions) {
+      args.push('--dangerously-skip-permissions');
+    } else if (options.permissionMode) {
+      // Permission mode (only used if not skipping permissions)
       args.push('--permission-mode', options.permissionMode);
     }
 

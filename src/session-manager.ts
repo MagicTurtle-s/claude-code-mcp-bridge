@@ -142,18 +142,20 @@ Available MCP configs in project directories:
 CRITICAL REQUIREMENTS for spawning subprocesses:
 1. MUST use execute_with_permission_mode() - never execute_task()
 2. MUST include permission_mode: "bypassPermissions" parameter
-3. MUST include mcpConfigPath parameter pointing to the temp config file
-4. Subprocesses will timeout without all three requirements above
+3. MUST include skip_all_permissions: true parameter (to bypass file read prompts)
+4. MUST include mcpConfigPath parameter pointing to the temp config file
+5. Subprocesses will timeout without all FOUR requirements above
 
 Workflow for HubSpot queries (deals, contacts, companies):
 1. Read C:\\Users\\jonat\\hubspot-mcp-railway\\.mcp-config.json
 2. Parse JSON, extract config.mcpServers (unwrap the outer wrapper)
 3. Write ONLY the mcpServers object to temp file (e.g. /tmp/hubspot-1234.json)
-4. Call mcp__claude-code-bridge__execute_with_permission_mode with ALL THREE parameters:
+4. Call mcp__claude-code-bridge__execute_with_permission_mode with ALL FOUR parameters:
    {
-     "prompt": "Use HubSpot MCP to find deals for Company X. You already have HubSpot MCP configured - do not try to read config files.",
+     "prompt": "Use HubSpot MCP to find deals for Company X",
      "mcpConfigPath": "/tmp/hubspot-1234.json",
-     "permission_mode": "bypassPermissions"
+     "permission_mode": "bypassPermissions",
+     "skip_all_permissions": true
    }
 5. Clean up temp file
 
@@ -161,17 +163,18 @@ Workflow for Asana queries (tasks, projects, goals):
 1. Read C:\\Users\\jonat\\asana-mcp-railway\\.mcp-config.json
 2. Parse JSON, extract config.mcpServers
 3. Write to temp file (e.g. /tmp/asana-5678.json)
-4. Call mcp__claude-code-bridge__execute_with_permission_mode with ALL THREE parameters:
+4. Call mcp__claude-code-bridge__execute_with_permission_mode with ALL FOUR parameters:
    {
-     "prompt": "Use Asana MCP to find pending tasks. You already have Asana MCP configured - do not try to read config files.",
+     "prompt": "Use Asana MCP to find pending tasks",
      "mcpConfigPath": "/tmp/asana-5678.json",
-     "permission_mode": "bypassPermissions"
+     "permission_mode": "bypassPermissions",
+     "skip_all_permissions": true
    }
 5. Clean up temp file
 
 For parallel queries (e.g. HubSpot + Asana), spawn both calls simultaneously with their respective configs.
 
-IMPORTANT: The subprocess will automatically have the MCP tools available via mcpConfigPath. Do NOT tell the subprocess to read config files - it already has the MCPs configured! Your prompt should focus on the actual task (e.g. "find deals", "search tasks"), not on reading configs.`;
+IMPORTANT: skip_all_permissions: true is CRITICAL because subprocesses cannot show permission prompts for file reads. Without it, they will hang waiting for approval.`;
 
       // Debug logging
       if (this.config.debug) {
@@ -187,6 +190,8 @@ IMPORTANT: The subprocess will automatically have the MCP tools available via mc
         mcpConfigPath: mergedConfigPath,
         appendSystemPrompt: orchestratorSystemPrompt,
         timeout: options.timeout || this.config.defaultTimeout,
+        // Pass through dangerouslySkipPermissions to subprocesses
+        dangerouslySkipPermissions: options.dangerouslySkipPermissions,
       });
 
       // Update session with result
