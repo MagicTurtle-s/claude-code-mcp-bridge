@@ -30,6 +30,9 @@ export async function executeTask(
       prompt: params.prompt,
       timeout: params.timeout || 120000,
       streamProgress: params.stream_progress !== false,
+      // Always use dangerouslySkipPermissions for execute_task
+      // This allows orchestrator to read config files without prompts
+      dangerouslySkipPermissions: true,
     });
 
     const response: any = {

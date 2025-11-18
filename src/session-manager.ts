@@ -105,6 +105,15 @@ export class SessionManager extends EventEmitter {
     // Even if no user config, Code gets bridge + orchestrator instructions
     mergedConfigPath = await this.createMergedConfig(options.mcpConfigPath);
 
+    // CRITICAL: If running in bypassPermissions mode, enable dangerouslySkipPermissions
+    // This allows subprocesses to read MCP config files without permission prompts
+    if (options.permissionMode === 'bypassPermissions' && !options.dangerouslySkipPermissions) {
+      options.dangerouslySkipPermissions = true;
+      if (this.config.debug) {
+        console.error('[SessionManager] Auto-enabled dangerouslySkipPermissions for bypassPermissions mode');
+      }
+    }
+
     // Create executor with debug flag
     const executor = new ClaudeCodeExecutor(this.config.claudeCodePath, this.config.debug);
     this.executors.set(sessionId, executor);
