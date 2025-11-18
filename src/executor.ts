@@ -232,6 +232,12 @@ export class ClaudeCodeExecutor extends EventEmitter {
       args.push('--append-system-prompt', options.appendSystemPrompt);
     }
 
+    // CRITICAL: When using --mcp-config, the prompt must come after --
+    // Otherwise Claude Code treats it as another config file path
+    if (options.mcpConfigPath) {
+      args.push('--');
+    }
+
     // The prompt must be last
     args.push(options.prompt);
 
