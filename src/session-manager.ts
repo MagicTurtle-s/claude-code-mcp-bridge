@@ -148,8 +148,8 @@ CRITICAL REQUIREMENTS for spawning subprocesses:
 
 Workflow for HubSpot queries (deals, contacts, companies):
 1. Read C:\\Users\\jonat\\hubspot-mcp-railway\\.mcp-config.json
-2. Parse JSON, extract config.mcpServers (unwrap the outer wrapper)
-3. Write ONLY the mcpServers object to temp file (e.g. /tmp/hubspot-1234.json)
+2. Parse JSON and extract ONLY the "hubspot" server from config.mcpServers
+3. Write to temp file wrapped in mcpServers (e.g. {"mcpServers":{"hubspot":{...}}})
 4. Call mcp__claude-code-bridge__execute_with_permission_mode with ALL FOUR parameters:
    {
      "prompt": "Use HubSpot MCP to find deals for Company X",
@@ -161,8 +161,8 @@ Workflow for HubSpot queries (deals, contacts, companies):
 
 Workflow for Asana queries (tasks, projects, goals):
 1. Read C:\\Users\\jonat\\asana-mcp-railway\\.mcp-config.json
-2. Parse JSON, extract config.mcpServers
-3. Write to temp file (e.g. /tmp/asana-5678.json)
+2. Parse JSON and extract ONLY the "asana" server from config.mcpServers
+3. Write to temp file wrapped in mcpServers (e.g. {"mcpServers":{"asana":{...}}})
 4. Call mcp__claude-code-bridge__execute_with_permission_mode with ALL FOUR parameters:
    {
      "prompt": "Use Asana MCP to find pending tasks",

@@ -39,6 +39,10 @@ export class ClaudeCodeExecutor extends EventEmitter {
     return new Promise((resolve, reject) => {
       const args = this.buildCommandArgs(options);
 
+      // ALWAYS log the full command for debugging
+      console.error('[ClaudeCodeExecutor] Full command:', this.claudeCodePath, args.join(' '));
+      console.error('[ClaudeCodeExecutor] dangerouslySkipPermissions:', options.dangerouslySkipPermissions);
+
       this.log('Starting execution with args:', args);
       this.log('Prompt:', options.prompt);
 
