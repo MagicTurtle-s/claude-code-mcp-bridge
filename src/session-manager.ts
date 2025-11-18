@@ -158,26 +158,46 @@ CRITICAL REQUIREMENTS for spawning subprocesses:
 Workflow for HubSpot queries (deals, contacts, companies):
 1. Read C:\\Users\\jonat\\hubspot-mcp-railway\\.mcp-config.json
 2. Parse JSON and extract ONLY the "hubspot" server from config.mcpServers
-3. Write to temp file wrapped in mcpServers (e.g. {"mcpServers":{"hubspot":{...}}})
-4. Call mcp__claude-code-bridge__execute_with_permission_mode with ALL FOUR parameters:
+3. Write to temp file (e.g. C:\\Users\\jonat\\AppData\\Local\\Temp\\hubspot-temp-config.json)
+   Content must be: {"mcpServers":{"hubspot":{...}}}
+4. Call mcp__claude-code-bridge__execute_with_permission_mode with these EXACT parameters:
+   - prompt: (your HubSpot task description)
+   - mcpConfigPath: "C:\\Users\\jonat\\AppData\\Local\\Temp\\hubspot-temp-config.json"
+   - permission_mode: "bypassPermissions"
+   - skip_all_permissions: true
+
+   Example tool call JSON:
    {
-     "prompt": "Use HubSpot MCP to find deals for Company X",
-     "mcpConfigPath": "/tmp/hubspot-1234.json",
-     "permission_mode": "bypassPermissions",
-     "skip_all_permissions": true
+     "name": "mcp__claude-code-bridge__execute_with_permission_mode",
+     "input": {
+       "prompt": "Use HubSpot MCP to find deals",
+       "mcpConfigPath": "C:\\Users\\jonat\\AppData\\Local\\Temp\\hubspot-temp-config.json",
+       "permission_mode": "bypassPermissions",
+       "skip_all_permissions": true
+     }
    }
 5. Clean up temp file
 
 Workflow for Asana queries (tasks, projects, goals):
 1. Read C:\\Users\\jonat\\asana-mcp-railway\\.mcp-config.json
 2. Parse JSON and extract ONLY the "asana" server from config.mcpServers
-3. Write to temp file wrapped in mcpServers (e.g. {"mcpServers":{"asana":{...}}})
-4. Call mcp__claude-code-bridge__execute_with_permission_mode with ALL FOUR parameters:
+3. Write to temp file (e.g. C:\\Users\\jonat\\AppData\\Local\\Temp\\asana-temp-config.json)
+   Content must be: {"mcpServers":{"asana":{...}}}
+4. Call mcp__claude-code-bridge__execute_with_permission_mode with these EXACT parameters:
+   - prompt: (your Asana task description)
+   - mcpConfigPath: "C:\\Users\\jonat\\AppData\\Local\\Temp\\asana-temp-config.json"
+   - permission_mode: "bypassPermissions"
+   - skip_all_permissions: true
+
+   Example tool call JSON:
    {
-     "prompt": "Use Asana MCP to find pending tasks",
-     "mcpConfigPath": "/tmp/asana-5678.json",
-     "permission_mode": "bypassPermissions",
-     "skip_all_permissions": true
+     "name": "mcp__claude-code-bridge__execute_with_permission_mode",
+     "input": {
+       "prompt": "Use Asana MCP to find tasks",
+       "mcpConfigPath": "C:\\Users\\jonat\\AppData\\Local\\Temp\\asana-temp-config.json",
+       "permission_mode": "bypassPermissions",
+       "skip_all_permissions": true
+     }
    }
 5. Clean up temp file
 
