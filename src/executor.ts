@@ -85,6 +85,31 @@ export class ClaudeCodeExecutor extends EventEmitter {
 
           this.log('Received JSON:', data.type, data.subtype || '');
 
+          // Log system init to see MCP servers
+          if (data.type === 'system' && data.subtype === 'init') {
+            // Save full system init to file for debugging
+            const fs = require('fs');
+            const path = require('path');
+            const debugFile = path.join(process.cwd(), 'system-init-debug.json');
+            fs.writeFileSync(debugFile, JSON.stringify(data, null, 2));
+            console.error('[ClaudeCodeExecutor] System init saved to:', debugFile);
+
+            if (data.mcp_servers) {
+              console.error('[ClaudeCodeExecutor] System init - MCP servers:');
+              Object.keys(data.mcp_servers).forEach(serverName => {
+                const server = data.mcp_servers[serverName];
+                console.error(`  - ${serverName}: status=${server.status}, tools=${server.tools?.length || 0}`);
+                if (server.tools && server.tools.length > 0) {
+                  server.tools.forEach((tool: any) => {
+                    console.error(`      * ${tool.name}`);
+                  });
+                }
+              });
+            } else {
+              console.error('[ClaudeCodeExecutor] System init - NO mcp_servers field!');
+            }
+          }
+
           // Store in chunks
           chunks.push(data);
           this.allChunks.push(data);

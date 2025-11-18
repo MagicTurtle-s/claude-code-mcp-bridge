@@ -48,20 +48,31 @@ export class SessionManager extends EventEmitter {
   private async createMergedConfig(mcpConfigPath?: string): Promise<string> {
     let userServers = {};
 
+    console.error('[SessionManager] createMergedConfig called with mcpConfigPath:', mcpConfigPath);
+
     // Read user-provided config if available
     if (mcpConfigPath) {
+      console.error('[SessionManager] Reading user config from:', mcpConfigPath);
       const userConfigContent = await fs.readFile(mcpConfigPath, 'utf-8');
       const userConfigObj = JSON.parse(userConfigContent);
 
       // Extract mcpServers if it exists, otherwise assume the whole object is servers
       userServers = userConfigObj.mcpServers || userConfigObj;
+      console.error('[SessionManager] User servers:', Object.keys(userServers).join(', '));
+    } else {
+      console.error('[SessionManager] No user config provided, using bridge only');
     }
+
+    const bridgeConfig = this.getBridgeConfig();
+    console.error('[SessionManager] Bridge config servers:', Object.keys(bridgeConfig).join(', '));
 
     // Merge bridge with user servers (bridge first, so user config takes precedence)
     const mergedServers = {
-      ...this.getBridgeConfig(),
+      ...bridgeConfig,
       ...userServers
     };
+
+    console.error('[SessionManager] Merged servers:', Object.keys(mergedServers).join(', '));
 
     // Wrap in mcpServers object as required by Claude Code CLI schema
     const wrappedConfig = {
@@ -71,11 +82,22 @@ export class SessionManager extends EventEmitter {
     // Write merged config to temp file
     const tempDir = os.tmpdir();
     const tempConfigPath = path.join(tempDir, `mcp-config-with-bridge-${Date.now()}.json`);
-    await fs.writeFile(tempConfigPath, JSON.stringify(wrappedConfig, null, 2));
+
+    const configJson = JSON.stringify(wrappedConfig, null, 2);
+
+    console.error('[SessionManager] Writing merged config to:', tempConfigPath);
+    console.error('[SessionManager] Config servers being written:', Object.keys(wrappedConfig.mcpServers).join(', '));
+    console.error('[SessionManager] Full config JSON:', configJson);
+
+    await fs.writeFile(tempConfigPath, configJson);
+
+    console.error('[SessionManager] Config file written successfully');
 
     // Normalize path to forward slashes for cross-platform compatibility
     // Claude Code CLI has issues with backslashes on Windows
-    return tempConfigPath.replace(/\\/g, '/');
+    const normalizedPath = tempConfigPath.replace(/\\/g, '/');
+    console.error('[SessionManager] Returning path:', normalizedPath);
+    return normalizedPath;
   }
 
   /**

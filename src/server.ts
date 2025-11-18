@@ -102,7 +102,21 @@ export class ClaudeCodeMCPServer {
       const { name, arguments: args } = request.params;
 
       if (this.config.debug) {
-        console.error(`[MCP Server] Tool call: ${name}`, args);
+        console.error(`[MCP Server] Tool call: ${name}`);
+        console.error(`[MCP Server] Full arguments:`, JSON.stringify(args, null, 2));
+
+        // Highlight critical parameters for debugging orchestration
+        if (args && typeof args === 'object') {
+          if ('mcp_config_path' in args) {
+            console.error(`[MCP Server] ⚠️  mcp_config_path: ${args.mcp_config_path}`);
+          }
+          if ('permission_mode' in args) {
+            console.error(`[MCP Server] ⚠️  permission_mode: ${args.permission_mode}`);
+          }
+          if ('skip_all_permissions' in args) {
+            console.error(`[MCP Server] ⚠️  skip_all_permissions: ${args.skip_all_permissions}`);
+          }
+        }
       }
 
       try {
