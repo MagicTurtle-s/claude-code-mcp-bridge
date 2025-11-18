@@ -151,7 +151,7 @@ Workflow for HubSpot queries (deals, contacts, companies):
 3. Write ONLY the mcpServers object to temp file (e.g. /tmp/hubspot-1234.json)
 4. Call mcp__claude-code-bridge__execute_with_permission_mode with ALL THREE parameters:
    {
-     "prompt": "Find deals for Company X in HubSpot",
+     "prompt": "Use HubSpot MCP to find deals for Company X. You already have HubSpot MCP configured - do not try to read config files.",
      "mcpConfigPath": "/tmp/hubspot-1234.json",
      "permission_mode": "bypassPermissions"
    }
@@ -163,7 +163,7 @@ Workflow for Asana queries (tasks, projects, goals):
 3. Write to temp file (e.g. /tmp/asana-5678.json)
 4. Call mcp__claude-code-bridge__execute_with_permission_mode with ALL THREE parameters:
    {
-     "prompt": "Find pending tasks in Asana",
+     "prompt": "Use Asana MCP to find pending tasks. You already have Asana MCP configured - do not try to read config files.",
      "mcpConfigPath": "/tmp/asana-5678.json",
      "permission_mode": "bypassPermissions"
    }
@@ -171,7 +171,7 @@ Workflow for Asana queries (tasks, projects, goals):
 
 For parallel queries (e.g. HubSpot + Asana), spawn both calls simultaneously with their respective configs.
 
-COMMON MISTAKE TO AVOID: DO NOT forget the mcpConfigPath parameter! Without it, the subprocess won't have access to HubSpot/Asana MCPs and will fail.`;
+IMPORTANT: The subprocess will automatically have the MCP tools available via mcpConfigPath. Do NOT tell the subprocess to read config files - it already has the MCPs configured! Your prompt should focus on the actual task (e.g. "find deals", "search tasks"), not on reading configs.`;
 
       // Debug logging
       if (this.config.debug) {
