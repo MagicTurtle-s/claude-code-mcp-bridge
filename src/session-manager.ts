@@ -4,6 +4,7 @@
 
 import { EventEmitter } from 'events';
 import { ClaudeCodeExecutor } from './executor';
+import { FileCoordinator } from './coordination/file-coordinator';
 import {
   SessionInfo,
   ClaudeCodeExecutionOptions,
@@ -18,9 +19,21 @@ export class SessionManager extends EventEmitter {
   private sessions: Map<string, SessionInfo> = new Map();
   private sessionTimeouts: Map<string, NodeJS.Timeout> = new Map();
   private executors: Map<string, ClaudeCodeExecutor> = new Map();
+  private fileCoordinator: FileCoordinator;
 
   constructor(private config: MCPServerConfig) {
     super();
+    this.fileCoordinator = new FileCoordinator(config.debug);
+
+    // Initialize coordinator
+    this.fileCoordinator.initialize().catch((error) => {
+      console.error('[SessionManager] Failed to initialize file coordinator:', error);
+    });
+
+    // Clean up old tasks periodically
+    setInterval(() => {
+      this.fileCoordinator.cleanupOldTasks();
+    }, 60 * 60 * 1000); // Every hour
   }
 
   /**
@@ -101,11 +114,109 @@ export class SessionManager extends EventEmitter {
   }
 
   /**
+   * Create and execute a new session using FILE COORDINATION
+   * This avoids recursive MCP calls by using shared file system
+   */
+  async createSessionWithFileCoordination(
+    options: ClaudeCodeExecutionOptions
+  ): Promise<{ sessionId: string; result: ClaudeCodeResult }> {
+    const sessionId = this.generateSessionId();
+
+    // Create session info
+    const session: SessionInfo = {
+      id: sessionId,
+      process: null,
+      createdAt: Date.now(),
+      lastActivity: Date.now(),
+      status: 'active',
+      messageCount: 0,
+      prompt: options.prompt,
+    };
+
+    this.sessions.set(sessionId, session);
+    this.emit('session:created', sessionId);
+
+    if (this.config.debug) {
+      console.error('[SessionManager] Using FILE COORDINATION (no recursive MCP)');
+      console.error('[SessionManager] Session:', sessionId);
+      console.error('[SessionManager] Prompt:', options.prompt);
+      console.error('[SessionManager] MCP Config:', options.mcpConfigPath || 'none');
+    }
+
+    try {
+      // Use file coordinator to execute task
+      const taskResult = await this.fileCoordinator.executeTask(
+        options.prompt,
+        options.mcpConfigPath,
+        {
+          permissionMode: options.permissionMode as 'ask' | 'bypassPermissions' | 'allowAll' | undefined,
+          dangerouslySkipPermissions: options.dangerouslySkipPermissions,
+          timeout: options.timeout || this.config.defaultTimeout,
+          claudeCodePath: this.config.claudeCodePath,
+        }
+      );
+
+      // Convert task result to Claude Code result
+      const result: ClaudeCodeResult = {
+        type: 'result',
+        subtype: taskResult.success ? 'success' : 'error',
+        result: (taskResult.success ? taskResult.result : taskResult.error) || 'No result',
+        session_id: sessionId,
+        is_error: !taskResult.success,
+        duration_ms: taskResult.executionTime,
+        duration_api_ms: 0,
+        num_turns: 0,
+        total_cost_usd: 0,
+        usage: {
+          input_tokens: 0,
+          cache_creation_input_tokens: 0,
+          cache_read_input_tokens: 0,
+          output_tokens: 0,
+          service_tier: 'standard',
+        },
+        modelUsage: {},
+        permission_denials: [],
+        uuid: sessionId,
+      };
+
+      // Update session
+      session.result = result;
+      session.status = 'completed';
+      this.updateSessionActivity(sessionId);
+      this.emit('session:completed', { sessionId, result });
+
+      // Schedule cleanup
+      this.scheduleSessionCleanup(sessionId);
+
+      return { sessionId, result };
+    } catch (error) {
+      // Update session status
+      session.status = 'failed';
+      this.updateSessionActivity(sessionId);
+      this.emit('session:failed', { sessionId, error });
+
+      // Schedule cleanup
+      this.scheduleSessionCleanup(sessionId);
+
+      throw error;
+    }
+  }
+
+  /**
    * Create and execute a new session
    */
   async createSession(
     options: ClaudeCodeExecutionOptions
   ): Promise<{ sessionId: string; result: ClaudeCodeResult; executor?: ClaudeCodeExecutor }> {
+    // DECISION: If mcpConfigPath is provided, use file coordination
+    // Otherwise use traditional executor (for backward compatibility)
+    if (options.mcpConfigPath) {
+      if (this.config.debug) {
+        console.error('[SessionManager] MCP config provided - using file coordination');
+      }
+      return await this.createSessionWithFileCoordination(options);
+    }
+
     const sessionId = this.generateSessionId();
     let mergedConfigPath: string | undefined;
 
