@@ -152,7 +152,7 @@ CRITICAL REQUIREMENTS for spawning subprocesses:
 1. MUST use execute_with_permission_mode() - never execute_task()
 2. MUST include permission_mode: "bypassPermissions" parameter
 3. MUST include skip_all_permissions: true parameter (to bypass file read prompts)
-4. MUST include mcpConfigPath parameter pointing to the temp config file
+4. MUST include mcp_config_path parameter pointing to the temp config file
 5. Subprocesses will timeout without all FOUR requirements above
 
 Workflow for HubSpot queries (deals, contacts, companies):
@@ -162,7 +162,7 @@ Workflow for HubSpot queries (deals, contacts, companies):
    Content must be: {"mcpServers":{"hubspot":{...}}}
 4. Call mcp__claude-code-bridge__execute_with_permission_mode with these EXACT parameters:
    - prompt: (your HubSpot task description)
-   - mcpConfigPath: "C:\\Users\\jonat\\AppData\\Local\\Temp\\hubspot-temp-config.json"
+   - mcp_config_path: "C:\\Users\\jonat\\AppData\\Local\\Temp\\hubspot-temp-config.json"
    - permission_mode: "bypassPermissions"
    - skip_all_permissions: true
 
@@ -171,7 +171,7 @@ Workflow for HubSpot queries (deals, contacts, companies):
      "name": "mcp__claude-code-bridge__execute_with_permission_mode",
      "input": {
        "prompt": "Use HubSpot MCP to find deals",
-       "mcpConfigPath": "C:\\Users\\jonat\\AppData\\Local\\Temp\\hubspot-temp-config.json",
+       "mcp_config_path": "C:\\Users\\jonat\\AppData\\Local\\Temp\\hubspot-temp-config.json",
        "permission_mode": "bypassPermissions",
        "skip_all_permissions": true
      }
@@ -185,7 +185,7 @@ Workflow for Asana queries (tasks, projects, goals):
    Content must be: {"mcpServers":{"asana":{...}}}
 4. Call mcp__claude-code-bridge__execute_with_permission_mode with these EXACT parameters:
    - prompt: (your Asana task description)
-   - mcpConfigPath: "C:\\Users\\jonat\\AppData\\Local\\Temp\\asana-temp-config.json"
+   - mcp_config_path: "C:\\Users\\jonat\\AppData\\Local\\Temp\\asana-temp-config.json"
    - permission_mode: "bypassPermissions"
    - skip_all_permissions: true
 
@@ -194,7 +194,7 @@ Workflow for Asana queries (tasks, projects, goals):
      "name": "mcp__claude-code-bridge__execute_with_permission_mode",
      "input": {
        "prompt": "Use Asana MCP to find tasks",
-       "mcpConfigPath": "C:\\Users\\jonat\\AppData\\Local\\Temp\\asana-temp-config.json",
+       "mcp_config_path": "C:\\Users\\jonat\\AppData\\Local\\Temp\\asana-temp-config.json",
        "permission_mode": "bypassPermissions",
        "skip_all_permissions": true
      }
