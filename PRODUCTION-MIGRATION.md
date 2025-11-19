@@ -193,6 +193,71 @@ Then restart Claude Desktop.
 - Memory MCP task: ~5-8 seconds
 - HubSpot/Asana: Pending Railway fix (not architecture issue)
 
+## Known Limitations
+
+### Claude Code SSE Transport Bugs (v2.0.45)
+
+**Issue:** Claude Code CLI has multiple bugs with SSE (Server-Sent Events) transport that prevent connection to Railway-deployed MCP servers.
+
+**Discovered:** 2025-11-18 during Railway MCP integration testing
+
+**Impact:**
+- ❌ Railway-deployed MCPs show as "failed" or "disabled"
+- ❌ SSE transport unreliable for production client deployments
+- ✅ stdio transport works perfectly
+
+**Root Cause:**
+Three bugs in Claude Code's SSE client:
+1. **Missing Accept headers** - Doesn't send `Accept: text/event-stream`
+2. **GET vs POST confusion** - Sends GET for health checks, server expects POST
+3. **Response parsing failures** - Can't parse SSE streams correctly
+
+**Workaround:**
+```json
+// ✅ Use stdio transport for production (RECOMMENDED)
+{
+  "mcpServers": {
+    "hubspot": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["C:/path/to/hubspot-mcp/dist/index.js"],
+      "env": {
+        "HUBSPOT_ACCESS_TOKEN": "your-token"
+      }
+    }
+  }
+}
+
+// ❌ Avoid SSE transport until Claude Code fixes bugs
+{
+  "mcpServers": {
+    "hubspot": {
+      "type": "sse",
+      "url": "https://hubspot-mcp-railway-production.up.railway.app/mcp"
+    }
+  }
+}
+```
+
+**For Client Rollouts:**
+- ✅ Deploy MCP servers locally using stdio transport
+- ⚠️ Wait for Claude Code team to fix SSE bugs before using Railway
+- 📚 See `docs/RAILWAY-SSE-DEBUGGING.md` for comprehensive guide
+
+**Debugging Lesson:**
+> **Always test external dependencies FIRST** (Railway logs, curl tests) before assuming bridge code is broken.
+> This saves hours of debugging in the wrong place!
+
+### Transport Compatibility Matrix
+
+| Transport | Claude Code v2.0.45 | Production Ready | Client Rollout |
+|-----------|---------------------|------------------|----------------|
+| stdio     | ✅ Works perfectly  | ✅ Yes           | ✅ Recommended |
+| SSE       | ❌ Broken (bugs)    | ❌ No            | ⚠️ Wait for fix |
+| HTTP      | ❓ Untested         | ❓ Unknown       | ❓ TBD         |
+
+---
+
 ## Production Checklist
 
 Before using in production:
@@ -201,11 +266,13 @@ Before using in production:
 - [x] Tested with working MCP (Memory server)
 - [x] No deadlocks observed
 - [x] Concurrent execution verified
-- [ ] HubSpot Railway deployment fixed
-- [ ] Asana Railway deployment fixed
-- [ ] Integration tests with real domain MCPs
+- [x] Transport compatibility tested (stdio ✅, SSE ❌)
+- [ ] ~~HubSpot Railway deployment~~ (blocked by Claude Code SSE bugs - use stdio)
+- [ ] ~~Asana Railway deployment~~ (blocked by Claude Code SSE bugs - use stdio)
+- [ ] Integration tests with stdio MCPs
 - [ ] Error handling and retry logic
 - [ ] Task cleanup automation
+- [ ] Client deployment guide with stdio transport
 
 ## Next Steps
 

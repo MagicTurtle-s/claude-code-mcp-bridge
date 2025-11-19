@@ -1,0 +1,110 @@
+{
+  "type": "system",
+  "subtype": "init",
+  "cwd": "C:\\Users\\jonat\\claude-code-mcp-bridge",
+  "session_id": "10d9b7ad-8f3a-4f15-a4ed-d233fc842888",
+  "tools": [
+    "Task",
+    "Bash",
+    "Glob",
+    "Grep",
+    "ExitPlanMode",
+    "Read",
+    "Edit",
+    "Write",
+    "NotebookEdit",
+    "WebFetch",
+    "TodoWrite",
+    "WebSearch",
+    "BashOutput",
+    "KillShell",
+    "Skill",
+    "SlashCommand",
+    "mcp__claude-code-bridge__execute_task",
+    "mcp__claude-code-bridge__execute_with_tools",
+    "mcp__claude-code-bridge__execute_with_permission_mode",
+    "mcp__claude-code-bridge__get_session_info"
+  ],
+  "mcp_servers": [
+    {
+      "name": "claude-code-bridge",
+      "status": "connected"
+    },
+    {
+      "name": "hubspot",
+      "status": "failed"
+    }
+  ],
+  "model": "claude-sonnet-4-5-20250929",
+  "permissionMode": "bypassPermissions",
+  "slash_commands": [
+    "ds-setup",
+    "setup",
+    "training",
+    "github-security-guardian",
+    "mcp-bridge-debugger",
+    "mcp-auth-handler",
+    "example-skills:skill-creator",
+    "example-skills:mcp-builder",
+    "example-skills:canvas-design",
+    "example-skills:algorithmic-art",
+    "example-skills:internal-comms",
+    "example-skills:webapp-testing",
+    "example-skills:artifacts-builder",
+    "example-skills:slack-gif-creator",
+    "example-skills:theme-factory",
+    "example-skills:brand-guidelines",
+    "document-skills:xlsx",
+    "document-skills:docx",
+    "document-skills:pptx",
+    "document-skills:pdf",
+    "compact",
+    "context",
+    "cost",
+    "init",
+    "pr-comments",
+    "release-notes",
+    "todos",
+    "review",
+    "security-review"
+  ],
+  "apiKeySource": "none",
+  "claude_code_version": "2.0.45",
+  "output_style": "default",
+  "agents": [
+    "general-purpose",
+    "statusline-setup",
+    "Explore",
+    "Plan"
+  ],
+  "skills": [
+    "github-security-guardian",
+    "mcp-bridge-debugger",
+    "mcp-auth-handler",
+    "example-skills:skill-creator",
+    "example-skills:mcp-builder",
+    "example-skills:canvas-design",
+    "example-skills:algorithmic-art",
+    "example-skills:internal-comms",
+    "example-skills:webapp-testing",
+    "example-skills:artifacts-builder",
+    "example-skills:slack-gif-creator",
+    "example-skills:theme-factory",
+    "example-skills:brand-guidelines",
+    "document-skills:xlsx",
+    "document-skills:docx",
+    "document-skills:pptx",
+    "document-skills:pdf"
+  ],
+  "plugins": [
+    {
+      "name": "example-skills",
+      "path": "C:\\Users\\jonat\\.claude\\plugins\\marketplaces\\anthropic-agent-skills\\"
+    },
+    {
+      "name": "document-skills",
+      "path": "C:\\Users\\jonat\\.claude\\plugins\\marketplaces\\anthropic-agent-skills\\"
+    }
+  ],
+  "uuid": "8619cd96-d9ad-4d59-9f77-93c34625b29f"
+}

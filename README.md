@@ -307,6 +307,46 @@ node test-executor.js
 - Ensure MCP URLs are accessible
 - Remember: Bridge doesn't validate configs - Code does
 
+### Railway MCP Connection Issues
+- See comprehensive guide: [docs/RAILWAY-SSE-DEBUGGING.md](./docs/RAILWAY-SSE-DEBUGGING.md)
+- Quick check: `curl https://your-mcp.railway.app/health`
+- **Known Issue**: Claude Code v2.0.45 has SSE transport bugs - use stdio for production
+
+## MCP Transport Compatibility
+
+The bridge supports all MCP transport types, but Claude Code CLI has varying compatibility:
+
+| Transport | Claude Code v2.0.45 | Production Ready | Recommended For |
+|-----------|---------------------|------------------|-----------------|
+| **stdio** | ✅ Works perfectly  | ✅ Yes           | ✅ **Client deployments** |
+| **SSE**   | ❌ Broken (3 bugs)  | ❌ No            | ⚠️ Wait for Claude Code fix |
+| **HTTP**  | ❓ Untested         | ❓ Unknown       | ❓ TBD |
+
+### Transport Recommendations
+
+**For Production Client Deployments:**
+```json
+{
+  "mcpServers": {
+    "hubspot": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["C:/path/to/hubspot-mcp/dist/index.js"],
+      "env": {
+        "HUBSPOT_ACCESS_TOKEN": "your-token"
+      }
+    }
+  }
+}
+```
+
+**Avoid SSE Until Fixed (Claude Code v2.0.45 bugs):**
+- Missing `Accept: text/event-stream` headers
+- GET vs POST confusion for handshakes
+- SSE stream parsing failures
+
+See [PRODUCTION-MIGRATION.md](./PRODUCTION-MIGRATION.md) for detailed transport compatibility information.
+
 ## Use Cases
 
 ### 1. Desktop Delegates to Code
