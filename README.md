@@ -33,6 +33,9 @@ Results flow back
 - **Full Claude Code Access**: All subagents, tools, and capabilities
 - **Streaming Responses**: Real-time progress updates
 - **Session Management**: Track and monitor active sessions
+- **Session Persistence**: OAuth sessions persist across Desktop restarts
+- **Auto-Authentication**: Seamless OAuth flow with browser auto-open
+- **Rate Limit Protection**: Intelligent authentication caching prevents rate limits
 
 ## Quick Start
 
@@ -361,9 +364,13 @@ Scripts call bridge tools programmatically with various MCP configs.
 ## Technical Details
 
 ### Session Management
-- Sessions auto-cleanup after 30 minutes idle
-- Graceful shutdown on SIGINT/SIGTERM
-- Event-driven lifecycle hooks
+- **Session Persistence**: MCP OAuth sessions saved to `%APPDATA%\Claude\.claude-mcp-sessions.json`
+- **Smart Validation**: Saved sessions validated on startup, reused if still valid
+- **Auto-Cleanup**: Invalid sessions automatically purged
+- **Rate Limit Protection**: Local authentication caching prevents repeated OAuth prompts
+- **Graceful Shutdown**: Clean shutdown on SIGINT/SIGTERM
+- **Event-Driven**: Lifecycle hooks for monitoring
+- **Security**: Per-user file isolation with restrictive permissions
 
 ### Streaming
 - Real-time progress updates via streaming JSON
