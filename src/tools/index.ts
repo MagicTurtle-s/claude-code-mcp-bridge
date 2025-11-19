@@ -193,6 +193,69 @@ export async function executeWithPermission(
 }
 
 /**
+ * Tool: spawn_code_subprocess_direct
+ * Spawn Code subprocess using file coordination (avoids stdio deadlock)
+ */
+export const spawnCodeSubprocessDirectTool = {
+  name: 'spawn_code_subprocess_direct',
+  description: 'Spawn a Code subprocess directly using file coordination instead of recursive MCP calls. This avoids stdio transport deadlock and is the recommended way for orchestrators to spawn domain-specific subprocesses. Use this when you need to spawn Code with a specific MCP configuration.',
+  inputSchema: z.object({
+    prompt: z.string().describe('The task for the Code subprocess to execute'),
+    mcp_config_path: z.string().describe('Path to MCP configuration file (e.g., /path/to/.mcp-config.json)'),
+    permission_mode: z.enum(['plan', 'acceptEdits', 'default', 'bypassPermissions']).describe('Permission mode for the subprocess'),
+    skip_all_permissions: z.boolean().optional().describe('Dangerously skip ALL permissions including file reads (default: true for orchestrator use)'),
+    timeout: z.number().optional().describe('Timeout in milliseconds (default: 120000)'),
+  }),
+};
+
+export async function spawnCodeSubprocessDirect(
+  sessionManager: SessionManager,
+  params: z.infer<typeof spawnCodeSubprocessDirectTool.inputSchema>
+): Promise<ToolExecutionResult> {
+  try {
+    // Use file coordination path (createSessionWithFileCoordination)
+    // This is triggered automatically when mcpConfigPath is provided
+    const { sessionId, result } = await sessionManager.createSession({
+      prompt: params.prompt,
+      mcpConfigPath: params.mcp_config_path,
+      permissionMode: params.permission_mode,
+      dangerouslySkipPermissions: params.skip_all_permissions !== false, // Default true
+      timeout: params.timeout || 120000,
+      streamProgress: false, // Orchestrator doesn't need streaming
+    });
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify({
+            success: true,
+            sessionId,
+            result: result.result,
+            cost: result.total_cost_usd,
+            duration: result.duration_ms,
+            coordinationMethod: 'file', // Indicates this used file coordination, not MCP recursion
+          }, null, 2),
+        },
+      ],
+    };
+  } catch (error) {
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify({
+            success: false,
+            error: error instanceof Error ? error.message : String(error),
+          }, null, 2),
+        },
+      ],
+      isError: true,
+    };
+  }
+}
+
+/**
  * Tool: get_session_info
  * Get information about Claude Code sessions
  */

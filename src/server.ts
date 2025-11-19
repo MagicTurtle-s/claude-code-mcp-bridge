@@ -18,6 +18,8 @@ import {
   executeWithTools,
   executeWithPermissionTool,
   executeWithPermission,
+  spawnCodeSubprocessDirectTool,
+  spawnCodeSubprocessDirect,
   getSessionInfoTool,
   getSessionInfo,
 } from './tools';
@@ -89,6 +91,11 @@ export class ClaudeCodeMCPServer {
             inputSchema: zodToJsonSchema(executeWithPermissionTool.inputSchema),
           },
           {
+            name: spawnCodeSubprocessDirectTool.name,
+            description: spawnCodeSubprocessDirectTool.description,
+            inputSchema: zodToJsonSchema(spawnCodeSubprocessDirectTool.inputSchema),
+          },
+          {
             name: getSessionInfoTool.name,
             description: getSessionInfoTool.description,
             inputSchema: zodToJsonSchema(getSessionInfoTool.inputSchema),
@@ -134,6 +141,11 @@ export class ClaudeCodeMCPServer {
           case 'execute_with_permission_mode': {
             const params = executeWithPermissionTool.inputSchema.parse(args);
             return await executeWithPermission(this.sessionManager, params);
+          }
+
+          case 'spawn_code_subprocess_direct': {
+            const params = spawnCodeSubprocessDirectTool.inputSchema.parse(args);
+            return await spawnCodeSubprocessDirect(this.sessionManager, params);
           }
 
           case 'get_session_info': {
