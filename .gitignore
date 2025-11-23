@@ -45,3 +45,6 @@ ORGANIZATION.md
 WORKSPACE*.md
 *-INDEX.md
 *.local.md
+
+# MCP config with secrets (for orchestrator development)
+.mcp-config*.json
